@@ -5,3 +5,7 @@ vvshow.iml
 #maven
 target/
 
+#eclipse
+.settings/
+.project
+.classpath
