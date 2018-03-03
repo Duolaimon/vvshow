@@ -1,26 +1,41 @@
 package com.duol.pojo;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+import java.io.Serializable;
 import java.util.Date;
 
-public class User {
+@ApiModel(value = "user",description = "用户对象")
+public class User implements Serializable {
+    @ApiModelProperty(readOnly = true,position = 1)
     private Integer id;
 
+    @ApiModelProperty(required = true,position = 2)
     private String username;
 
+    @ApiModelProperty(required = true,position = 3)
     private String password;
 
+    @ApiModelProperty(required = true,position = 4)
     private String email;
 
+    @ApiModelProperty(position = 5)
     private String phone;
 
+    @ApiModelProperty(position = 6)
     private String question;
 
+    @ApiModelProperty(position = 7)
     private String answer;
 
+    @ApiModelProperty(position = 8)
     private Integer role;
 
+    @ApiModelProperty(readOnly = true,position = 9)
     private Date createTime;
 
+    @ApiModelProperty(readOnly = true,position = 10)
     private Date updateTime;
 
     public User(Integer id, String username, String password, String email, String phone, String question, String answer, Integer role, Date createTime, Date updateTime) {
