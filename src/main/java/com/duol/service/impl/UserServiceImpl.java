@@ -1,5 +1,7 @@
 package com.duol.service.impl;
 
+import com.duol.cache.ObjectCache;
+import com.duol.cache.SessionCache;
 import com.duol.common.Const;
 import com.duol.common.ServerResponse;
 import com.duol.common.TokenCache;
@@ -21,26 +23,28 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
 
     private UserMapper userMapper;
+    private ObjectCache objectCache;
 
     @Autowired
-    public UserServiceImpl(UserMapper userMapper) {
+    public UserServiceImpl(UserMapper userMapper, ObjectCache objectCache) {
         this.userMapper = userMapper;
+        this.objectCache = objectCache;
     }
 
     @Override
-    public ServerResponse<User> login(String username, String password) {
-        int resultCount = userMapper.checkUsername(username);
-        if (resultCount < 1) {
-            return ServerResponse.createByErrorMessage("用户名不存在");
-        }
+    public ServerResponse<String> login(String username, String password) {
         String md5Password = MD5Util.MD5EncodeUtf8(password);
         User user = userMapper.selectLogin(username, md5Password);
         if (user == null) {
-            return ServerResponse.createByErrorMessage("密码错误");
+            return ServerResponse.createByErrorMessage("用户名不存在或密码错误");
         }
+        Integer userId = user.getId();
         user.setPassword(StringUtils.EMPTY);
-        return ServerResponse.createBySuccess("登录成功", user);
+        String sessionID = SessionCache.cacheSessionID(userId.toString());
+        objectCache.cacheObject(userId.toString(), user);
+        return ServerResponse.createBySuccess("登录成功", userId + "-" + sessionID);
     }
+
 
     @Override
     public ServerResponse<String> register(User user) {
@@ -61,6 +65,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void logout(String userId) {
+        SessionCache.removeSessionID(userId);
+        objectCache.deleteCache(userId);
+    }
+
+    @Override
     public ServerResponse<String> checkValid(String str, String type) {
         if (StringUtils.isNotBlank(type)) {
             if (Const.USERNAME.equals(type)) {
@@ -73,7 +83,7 @@ public class UserServiceImpl implements UserService {
                     return ServerResponse.createByErrorMessage("email已存在");
                 }
             }
-        }else {
+        } else {
             return ServerResponse.createByErrorMessage("参数错误");
         }
         return ServerResponse.createBySuccessMessage("校验成功");
@@ -125,12 +135,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ServerResponse<String> resetPassword(String oldPassword, String newPassword, User user) {
-        if (userMapper.checkPassword(MD5Util.MD5EncodeUtf8(oldPassword), user.getId()) < 1) {
+    public ServerResponse<String> resetPassword(String oldPassword, String newPassword, String userId) {
+        if (userMapper.checkPassword(MD5Util.MD5EncodeUtf8(oldPassword), Integer.valueOf(userId)) < 1) {
             return ServerResponse.createByErrorMessage("旧密码错误");
         }
-        user.setPassword(MD5Util.MD5EncodeUtf8(newPassword));
-        if (userMapper.updateByPrimaryKeySelective(user) > 0) {
+        newPassword = (MD5Util.MD5EncodeUtf8(newPassword));
+        if (userMapper.updatePasswordById(Integer.valueOf(userId),newPassword) > 0) {
             return ServerResponse.createBySuccessMessage("密码更新成功");
         }
         return ServerResponse.createByErrorMessage("密码更新失败");
@@ -157,11 +167,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ServerResponse<User> getInformation(Integer userId) {
-        User user = userMapper.selectByPrimaryKey(userId);
+        //查找缓存
+        User user = (User) objectCache.entries(userId.toString());
         if (user == null) {
-            return ServerResponse.createByErrorMessage("找不到当前用户");
+            user = userMapper.selectByPrimaryKey(userId);
+            if (user == null) {
+                return ServerResponse.createByErrorMessage("找不到当前用户");
+            }
         }
         user.setPassword(StringUtils.EMPTY);
+        objectCache.cacheObject(userId.toString(),user);
         return ServerResponse.createBySuccess(user);
     }
 
@@ -172,4 +187,5 @@ public class UserServiceImpl implements UserService {
         }
         return ServerResponse.createByError();
     }
+
 }

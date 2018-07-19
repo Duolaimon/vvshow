@@ -1,5 +1,6 @@
 package com.duol.controller.portal;
 
+import com.duol.cache.SessionCache;
 import com.duol.common.Const;
 import com.duol.common.ResponseCode;
 import com.duol.common.ServerResponse;
@@ -11,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpSession;
+import java.util.Map;
 
 /**
  * @author Duolaimon
@@ -36,9 +39,9 @@ public class UserController {
     @ApiResponses({
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 404, message = "Not Found!!!", response = UserResponse.class)})
-    @GetMapping("/session")
-    public ServerResponse<User> login(String username, String password, HttpSession session) {
-        ServerResponse<User> response = userService.login(username, password);
+    @PostMapping("/session")
+    public ServerResponse<String> login(String username, String password, HttpSession session) {
+        ServerResponse<String> response = userService.login(username, password);
         if (response.isSuccess()) {
             session.setAttribute(Const.CURRENT_USER, response.getData());
         }
@@ -48,12 +51,13 @@ public class UserController {
     @ApiOperation("用户注册")
     @ApiImplicitParam(name = "user", value = "用户注册信息", required = true, dataType = "user")
     @PostMapping("/user")
-    public ServerResponse<String> register(@RequestBody User user) {
+    public ServerResponse<String> register(@RequestBody User user, ServletRequest request) {
         return userService.register(user);
     }
 
     @DeleteMapping("/session")
     public ServerResponse<String> logout(HttpSession session) {
+        userService.logout(Const.CURRENT_USER.split("-")[0]);
         session.removeAttribute(Const.CURRENT_USER);
         return ServerResponse.createBySuccess();
     }
@@ -65,36 +69,36 @@ public class UserController {
 
     @GetMapping("/user/{userId}")
     public ServerResponse<User> getUserInfo(HttpSession session) {
-        User user = (User) session.getAttribute(Const.CURRENT_USER);
-        if (user != null) {
-            return ServerResponse.createBySuccess(user);
+        String[] info =  ((String)session.getAttribute(Const.CURRENT_USER)).split("-");
+        if (SessionCache.verifySessionID(info[0],info[1])) {
+            return userService.getInformation(Integer.valueOf(info[0]));
         }
         return ServerResponse.createByErrorMessage("用户未登录");
     }
 
-    @GetMapping("/user/forget-password/question")
+    @GetMapping("/password/forget-password/question")
     public ServerResponse<String> forgetGetQuestion(String username) {
 
         return userService.selectQuestion(username);
     }
 
-    @GetMapping("/user/forget-password/answer")
+    @GetMapping("/password/forget-password/answer")
     public ServerResponse<String> forgetCheckAnswer(String username, String question, String answer) {
         return userService.checkAnswer(username, question, answer);
     }
 
-    @PutMapping("/user/forget-password")
-    public ServerResponse<String> forgetResetPassword(String username, String newPassword, String forgetToken) {
-        return userService.forgetResetPassword(username, newPassword, forgetToken);
+    @PutMapping("/password/forget-password")
+    public ServerResponse<String> forgetResetPassword(@RequestBody Map<String, String> map) {
+        return userService.forgetResetPassword(map.get("username"), map.get("newPassword"), map.get("token"));
     }
 
     @PutMapping("/user/{userId}/password")
     public ServerResponse<String> resetPassword(HttpSession session, String oldPassword, String newPassword) {
-        User user = (User) session.getAttribute(Const.CURRENT_USER);
-        if (user == null) {
+        String[] info =  ((String)session.getAttribute(Const.CURRENT_USER)).split("-");
+        if (!SessionCache.verifySessionID(info[0],info[1])) {
             return ServerResponse.createByErrorMessage("用户未登录");
         }
-        return userService.resetPassword(oldPassword, newPassword, user);
+        return userService.resetPassword(oldPassword, newPassword, info[0]);
     }
 
     @PutMapping("/user/{userId}")

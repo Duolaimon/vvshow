@@ -12,7 +12,7 @@ import com.duol.pojo.User;
  */
 public interface UserService {
 
-    ServerResponse<User> login(String username, String password);
+    ServerResponse<String> login(String username, String password);
 
     ServerResponse<String> register(User user);
 
@@ -51,7 +51,7 @@ public interface UserService {
      * @param newPassword   新密码
      * @param user          用户
      */
-    ServerResponse<String> resetPassword(String oldPassword, String newPassword, User user);
+    ServerResponse<String> resetPassword(String oldPassword, String newPassword, String userId);
 
     ServerResponse<User> updateInformation(User user);
 
@@ -61,4 +61,6 @@ public interface UserService {
      * 检验是否是管理员
      */
     ServerResponse checkAdminRole(User user);
+
+    void logout(String userId);
 }
