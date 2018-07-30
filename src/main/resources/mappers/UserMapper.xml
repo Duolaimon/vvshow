@@ -54,7 +54,7 @@
               and answer = #{answer}
     </select>
     <select id="checkPassword" resultType="java.lang.Integer">
-        SELECt count(1)
+        SELECt count(id)
         from tb_user
         where password = #{password}
               and id = #{userId}

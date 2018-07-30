@@ -1,10 +1,9 @@
 package com.duol.service.impl;
 
 import com.duol.cache.ObjectCache;
-import com.duol.cache.SessionCache;
+import com.duol.cache.ValueCache;
 import com.duol.common.Const;
 import com.duol.common.ServerResponse;
-import com.duol.common.TokenCache;
 import com.duol.dao.UserMapper;
 import com.duol.pojo.User;
 import com.duol.service.UserService;
@@ -13,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -38,11 +38,8 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             return ServerResponse.createByErrorMessage("用户名不存在或密码错误");
         }
-        Integer userId = user.getId();
-        user.setPassword(StringUtils.EMPTY);
-        String sessionID = SessionCache.cacheSessionID(userId.toString());
-        objectCache.cacheObject(userId.toString(), user);
-        return ServerResponse.createBySuccess("登录成功", userId + "-" + sessionID);
+
+        return ServerResponse.createBySuccess("登录成功", loginSuccess(user));
     }
 
 
@@ -61,12 +58,28 @@ public class UserServiceImpl implements UserService {
         if (userMapper.insert(user) < 1) {
             return ServerResponse.createByErrorMessage("注册失败");
         }
-        return ServerResponse.createBySuccessMessage("注册成功");
+        return ServerResponse.createBySuccess("注册成功",loginSuccess(user));
+    }
+
+    /**
+     * 登陆成功
+     * @param user  登录用户
+     * @return  session id
+     */
+    private String loginSuccess(User user) {
+        Integer userId = user.getId();
+        user.setPassword(StringUtils.EMPTY);
+        String sessionID = ValueCache.cacheSessionID(userId.toString());
+        ValueCache.cache(ValueCache.USERNAME_PREFIX + user.getUsername(), userId.toString());
+        objectCache.cacheObject(userId.toString(), user);//缓存用户信息
+        return userId + "-" + sessionID;
     }
 
     @Override
     public void logout(String userId) {
-        SessionCache.removeSessionID(userId);
+        ValueCache.removeSessionID(userId);
+        String username = objectCache.getProperty(userId, "username");
+        ValueCache.delete(ValueCache.USERNAME_PREFIX + username);
         objectCache.deleteCache(userId);
     }
 
@@ -74,7 +87,8 @@ public class UserServiceImpl implements UserService {
     public ServerResponse<String> checkValid(String str, String type) {
         if (StringUtils.isNotBlank(type)) {
             if (Const.USERNAME.equals(type)) {
-                if (userMapper.checkUsername(str) > 0) {
+//                todo
+                if (Objects.nonNull(ValueCache.get(ValueCache.USERNAME_PREFIX + str)) || userMapper.checkUsername(str) > 0) {
                     return ServerResponse.createByErrorMessage("用户名已存在");
                 }
             }
@@ -95,7 +109,13 @@ public class UserServiceImpl implements UserService {
         if (validResponse.isSuccess()) {
             return ServerResponse.createByErrorMessage("用户不存在");
         }
-        String question = userMapper.selectQuestionByUsername(username);
+//        String userId = ValueCache.get(username);
+//        String question = objectCache.getProperty(userId,"question");
+//        if (Objects.isNull(question)) {
+//            question = userMapper.selectQuestionByUsername(username);
+//        }
+        String question;
+        question = userMapper.selectQuestionByUsername(username);
         if (StringUtils.isNotBlank(question)) {
             return ServerResponse.createBySuccess(question);
         }
@@ -106,7 +126,8 @@ public class UserServiceImpl implements UserService {
     public ServerResponse<String> checkAnswer(String username, String question, String answer) {
         if (userMapper.checkAnswer(username, question, answer) > 0) {
             String forgetToken = UUID.randomUUID().toString();
-            TokenCache.setKey(TokenCache.TOKEN_PREFIX + username, forgetToken);
+//            TokenCache.setKey(TokenCache.TOKEN_PREFIX + username, forgetToken);
+            ValueCache.cache(ValueCache.TOKEN_PREFIX + username, forgetToken);
             return ServerResponse.createBySuccess(forgetToken);
         }
         return ServerResponse.createByErrorMessage("问题答案错误");
@@ -121,7 +142,8 @@ public class UserServiceImpl implements UserService {
         if (validResponse.isSuccess()) {
             return ServerResponse.createByErrorMessage("用户不存在");
         }
-        String token = TokenCache.getKey(TokenCache.TOKEN_PREFIX + username);
+//        String token = TokenCache.getKey(TokenCache.TOKEN_PREFIX + username);
+        String token = ValueCache.get(ValueCache.TOKEN_PREFIX + username);
         if (StringUtils.isBlank(token)) {
             return ServerResponse.createByErrorMessage("token无效或过期");
         }
@@ -136,14 +158,21 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ServerResponse<String> resetPassword(String oldPassword, String newPassword, String userId) {
-        if (userMapper.checkPassword(MD5Util.MD5EncodeUtf8(oldPassword), Integer.valueOf(userId)) < 1) {
+        if (!checkPassword(oldPassword, userId)) {
             return ServerResponse.createByErrorMessage("旧密码错误");
         }
-        newPassword = (MD5Util.MD5EncodeUtf8(newPassword));
-        if (userMapper.updatePasswordById(Integer.valueOf(userId),newPassword) > 0) {
+        if (userMapper.updatePasswordById(Integer.valueOf(userId), MD5Util.MD5EncodeUtf8(newPassword)) > 0) {
+            objectCache.cacheProperty(userId, "password", MD5Util.MD5EncodeUtf8(newPassword));
             return ServerResponse.createBySuccessMessage("密码更新成功");
         }
         return ServerResponse.createByErrorMessage("密码更新失败");
+    }
+
+    private boolean checkPassword(String password, String userId) {
+        String name = "password";
+        String oldPassword = objectCache.getProperty(userId, name);
+        if (StringUtils.equals(MD5Util.MD5EncodeUtf8(password), oldPassword)) return true;
+        return userMapper.checkPassword(MD5Util.MD5EncodeUtf8(oldPassword), Integer.valueOf(userId)) > 0;
     }
 
     @Override
@@ -160,6 +189,7 @@ public class UserServiceImpl implements UserService {
         updateUser.setAnswer(user.getAnswer());
 
         if (userMapper.updateByPrimaryKeySelective(updateUser) > 0) {
+            objectCache.cacheObject(updateUser.getId().toString(), updateUser);
             return ServerResponse.createBySuccess("更新个人信息成功", updateUser);
         }
         return ServerResponse.createByErrorMessage("更新个人信息失败");
@@ -176,13 +206,13 @@ public class UserServiceImpl implements UserService {
             }
         }
         user.setPassword(StringUtils.EMPTY);
-        objectCache.cacheObject(userId.toString(),user);
+        objectCache.cacheObject(userId.toString(), user);
         return ServerResponse.createBySuccess(user);
     }
 
     @Override
     public ServerResponse checkAdminRole(User user) {
-        if (user != null && user.getRole() == Const.Role.ROLE_ADMIN) {
+        if (user != null && Const.Role.ROLE_ADMIN.equals(user.getRole())) {
             return ServerResponse.createBySuccess();
         }
         return ServerResponse.createByError();

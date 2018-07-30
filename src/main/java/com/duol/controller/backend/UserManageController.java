@@ -2,22 +2,22 @@ package com.duol.controller.backend;
 
 import com.duol.common.Const;
 import com.duol.common.ServerResponse;
-import com.duol.pojo.User;
 import com.duol.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpSession;
+import java.util.Objects;
 
 /**
  * @author Duolaimon
  * 18-7-17 下午3:42
  */
 @Controller
-@RequestMapping("/manage/user")
+@RequestMapping("/manage")
 public class UserManageController {
 
     private final UserService userService;
@@ -27,21 +27,18 @@ public class UserManageController {
         this.userService = userService;
     }
 
-    @RequestMapping(value="login.do",method = RequestMethod.POST)
+    @PostMapping("/session")
     @ResponseBody
-    public ServerResponse<String> login(String username, String password, HttpSession session){
-        ServerResponse<String> response = userService.login(username,password);
-        if(response.isSuccess()){
-            //todo
-//            User user = response.getData();
-            User user = new User();
-            if(user.getRole() == Const.Role.ROLE_ADMIN){
-                //说明登录的是管理员
-                session.setAttribute(Const.CURRENT_USER,user);
-                return response;
-            }else{
-                return ServerResponse.createByErrorMessage("不是管理员,无法登录");
-            }
+    public ServerResponse<String> login(String username, String password, HttpSession session) {
+        if (Objects.nonNull(session.getAttribute(Const.CURRENT_ADMIN))) {
+            return ServerResponse.createBySuccessMessage("用户已登录,不要重复登录");
+        }
+        ServerResponse<String> response = userService.login(username, password);
+        if (response.isSuccess()) {
+            String result = response.getData();
+            session.setAttribute(Const.CURRENT_ADMIN, result);
+        } else {
+            return ServerResponse.createByErrorMessage("不是管理员,无法登录");
         }
         return response;
     }

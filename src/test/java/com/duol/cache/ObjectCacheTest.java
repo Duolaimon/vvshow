@@ -4,7 +4,7 @@ import com.duol.pojo.User;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import org.junit.Assert;
 
 /**
  * @author Duolaimon
@@ -12,11 +12,11 @@ import static org.junit.Assert.*;
  */
 public class ObjectCacheTest {
     private ObjectCache objectCache;
-    String key = "test:object";
+    String key = "Ftp1:object";
 
     @Before
     public void setup() {
-        objectCache = new ObjectCache();
+        objectCache = new ObjectCache(new RedisCache<>());
     }
     @Test
     public void cacheObject() {
@@ -36,6 +36,13 @@ public class ObjectCacheTest {
 
     @Test
     public void deleteCache() {
+        String key = "23";
         objectCache.deleteCache(key);
+    }
+
+    @Test
+    public void getProperty() {
+        String result = objectCache.getProperty("fdaf","fdaf");
+        Assert.assertNull(result);
     }
 }

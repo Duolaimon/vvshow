@@ -1,5 +1,14 @@
 package com.duol.vo;
 
+import com.duol.common.Const;
+import com.duol.dao.ShippingMapper;
+import com.duol.pojo.Order;
+import com.duol.pojo.OrderItem;
+import com.duol.pojo.Shipping;
+import com.duol.util.DateTimeUtil;
+import com.duol.util.PropertiesUtil;
+import com.google.common.collect.Lists;
+
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -7,6 +16,7 @@ import java.util.List;
  * @author Duolaimon
  * 18-7-16 下午3:46
  */
+@SuppressWarnings("unused")
 public class OrderVo {
 
     private Long orderNo;
@@ -41,6 +51,45 @@ public class OrderVo {
     private String receiverName;
 
     private ShippingVo shippingVo;
+
+    public static OrderVo assembleOrderVo(Order order, List<OrderItem> orderItemList, ShippingMapper shippingMapper) {
+        OrderVo orderVo = new OrderVo();
+        orderVo.setOrderNo(order.getOrderNo());
+        orderVo.setPayment(order.getPayment());
+        orderVo.setPaymentType(order.getPaymentType());
+        orderVo.setPaymentTypeDesc(Const.PaymentTypeEnum.codeOf(order.getPaymentType()).getValue());
+
+        orderVo.setPostage(order.getPostage());
+        orderVo.setStatus(order.getStatus());
+        orderVo.setStatusDesc(Const.OrderStatusEnum.codeOf(order.getStatus()).getValue());
+
+        orderVo.setShippingId(order.getShippingId());
+        Shipping shipping = shippingMapper.selectByPrimaryKey(order.getShippingId());
+        if (shipping != null) {
+            orderVo.setReceiverName(shipping.getReceiverName());
+            orderVo.setShippingVo(ShippingVo.assembleShippingVo(shipping));
+        }
+
+        orderVo.setPaymentTime(DateTimeUtil.dateToStr(order.getPaymentTime()));
+        orderVo.setSendTime(DateTimeUtil.dateToStr(order.getSendTime()));
+        orderVo.setEndTime(DateTimeUtil.dateToStr(order.getEndTime()));
+        orderVo.setCreateTime(DateTimeUtil.dateToStr(order.getCreateTime()));
+        orderVo.setCloseTime(DateTimeUtil.dateToStr(order.getCloseTime()));
+
+
+        orderVo.setImageHost(PropertiesUtil.getProperty("ftp.server.http.prefix"));
+
+
+        List<OrderItemVo> orderItemVoList = Lists.newArrayList();
+
+        for (OrderItem orderItem : orderItemList) {
+            OrderItemVo orderItemVo = OrderItemVo.assembleOrderItemVo(orderItem);
+            orderItemVoList.add(orderItemVo);
+        }
+        orderVo.setOrderItemVoList(orderItemVoList);
+        return orderVo;
+    }
+
 
     public Long getOrderNo() {
         return orderNo;

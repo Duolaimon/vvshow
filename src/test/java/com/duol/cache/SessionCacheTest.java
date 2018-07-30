@@ -33,12 +33,12 @@ public class SessionCacheTest {
 
     @Test
     public void getUUID() {
-        System.out.println(SessionCache.getUUID());
+        System.out.println(ValueCache.getUUID());
     }
 
     @Test
     public void cacheSessionID() {
-        String sessionId = SessionCache.cacheSessionID("阿里");
+        String sessionId = ValueCache.cacheSessionID("阿里");
         System.out.println(sessionId);
     }
 

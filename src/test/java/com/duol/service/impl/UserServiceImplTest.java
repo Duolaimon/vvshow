@@ -1,8 +1,6 @@
 package com.duol.service.impl;
 
-import com.duol.dao.UserMapper;
-import com.duol.pojo.User;
-import com.duol.util.MD5Util;
+import com.duol.service.UserService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,13 +15,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 public class UserServiceImplTest {
     @Autowired
-    private UserMapper userMapper;
+    private UserService userService;
 
     @Test
-    public void testLogin() {
-        String md5Password = MD5Util.MD5EncodeUtf8("797979");
-        String username = "duolaimon";
-        User id = userMapper.selectLogin(username,md5Password);
-        System.out.println(id.getId());
+    public void logout() {
+        userService.logout("23");
     }
 }

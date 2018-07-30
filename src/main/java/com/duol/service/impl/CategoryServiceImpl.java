@@ -1,11 +1,12 @@
 package com.duol.service.impl;
 
+import com.duol.cache.ListCache;
 import com.duol.common.ServerResponse;
 import com.duol.dao.CategoryMapper;
 import com.duol.pojo.Category;
+import com.duol.pojo.CategoryId2Pid;
 import com.duol.service.CategoryService;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -14,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Duolaimon
@@ -23,12 +24,21 @@ import java.util.Set;
 @Service
 public class CategoryServiceImpl implements CategoryService {
     private Logger logger = LoggerFactory.getLogger(CategoryServiceImpl.class);
+    private static final String CATEGORY_PREFIX = "category:";
+    private static final String CATEGORY_ID_LIST_PREFIX = "categoryList";
 
     private final CategoryMapper categoryMapper;
+    private final ListCache<CategoryId2Pid> categoryId2PidListCache;
+    private final ListCache<Integer> integerListCache;
+
+    private List<CategoryId2Pid> categoryIdList;
+
 
     @Autowired
-    public CategoryServiceImpl(CategoryMapper categoryMapper) {
+    public CategoryServiceImpl(CategoryMapper categoryMapper, ListCache<CategoryId2Pid> categoryId2PidListCache, ListCache<Integer> integerListCache) {
         this.categoryMapper = categoryMapper;
+        this.categoryId2PidListCache = categoryId2PidListCache;
+        this.integerListCache = integerListCache;
     }
 
     @Override
@@ -73,31 +83,44 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public ServerResponse<List<Integer>> selectCategoryAndChildrenById(Integer categoryId) {
-        Set<Category> categorySet = Sets.newHashSet();
-        findChildCategory(categorySet, categoryId);
+        cacheCategoryIdList(categoryId);
+        categoryIdList = categoryId2PidListCache.range(CATEGORY_ID_LIST_PREFIX);
+        return cacheCategoryIdByParentId(categoryId);
 
-        List<Integer> categoryIdList = Lists.newArrayList();
-        if (categoryId != null) {
-            for (Category categoryItem :
-                    categorySet) {
-                categoryIdList.add(categoryItem.getId());
-            }
-        }
-        return ServerResponse.createBySuccess(categoryIdList);
     }
 
     /**
-     * 递归找到所有子节点
+     * 缓存类别id和其父类id对应关系
      */
-    private void findChildCategory(Set<Category> categorySet, Integer categoryId) {
-        Category category = categoryMapper.selectByPrimaryKey(categoryId);
-        if (category != null) {
-            categorySet.add(category);
+    private void cacheCategoryIdList(Integer categoryId) {
+        if (!categoryId2PidListCache.hasKey(CATEGORY_ID_LIST_PREFIX)) {
+            categoryIdList = categoryMapper.selectCategoryIdLists();
+            List<Integer> resultList = Lists.newArrayList();
+            findChildCategoryId(resultList, categoryId);
+            categoryId2PidListCache.cacheNewList(CATEGORY_ID_LIST_PREFIX, categoryIdList);
         }
-        List<Category> categoryList = categoryMapper.selectCategoryChildrenByParentId(categoryId);
-        for (Category categoryItem :
-                categoryList) {
-            findChildCategory(categorySet, categoryItem.getId());
+    }
+
+    /**
+     * 缓存指定类别和其子类id
+     */
+    private ServerResponse<List<Integer>> cacheCategoryIdByParentId(Integer categoryId) {
+        if(integerListCache.hasKey(categoryId.toString())){
+            return ServerResponse.createBySuccess(integerListCache.range(categoryId.toString()));
+        }
+        List<Integer> result = Lists.newArrayList();
+        result.add(categoryId);
+        findChildCategoryId(result,categoryId);
+        integerListCache.cacheNewList(CATEGORY_PREFIX + categoryId,result);
+        return ServerResponse.createBySuccess(result);
+    }
+
+    private void findChildCategoryId(List<Integer> result, Integer parentId) {
+        List<CategoryId2Pid> list = categoryIdList.stream().filter(item -> parentId.equals(item.getParentId())).collect(Collectors.toList());
+        for (CategoryId2Pid item :
+                list) {
+            result.add(item.getId());
+            findChildCategoryId(result, item.getId());
         }
     }
 }

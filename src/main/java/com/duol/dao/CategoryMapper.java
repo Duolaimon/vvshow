@@ -1,6 +1,7 @@
 package com.duol.dao;
 
 import com.duol.pojo.Category;
+import com.duol.pojo.CategoryId2Pid;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -20,4 +21,8 @@ public interface CategoryMapper {
     int updateByPrimaryKey(Category record);
 
     List<Category> selectCategoryChildrenByParentId(Integer parentId);
+
+    List<Integer> selectCategoryChildrenIdByParentId(Integer parentId);
+
+    List<CategoryId2Pid> selectCategoryIdLists();
 }

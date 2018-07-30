@@ -1,8 +1,6 @@
 package com.duol.controller.portal;
 
-import com.duol.cache.SessionCache;
 import com.duol.common.Const;
-import com.duol.common.ResponseCode;
 import com.duol.common.ServerResponse;
 import com.duol.pojo.User;
 import com.duol.service.UserService;
@@ -12,9 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.Map;
+import java.util.Objects;
+
+import static com.duol.util.SessionUtil.verifyUserLogin;
 
 /**
  * @author Duolaimon
@@ -40,10 +41,14 @@ public class UserController {
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 404, message = "Not Found!!!", response = UserResponse.class)})
     @PostMapping("/session")
-    public ServerResponse<String> login(String username, String password, HttpSession session) {
+    public ServerResponse<String> login(String username, String password, HttpSession session, HttpServletResponse servletResponse) {
+        if (Objects.nonNull(session.getAttribute(Const.CURRENT_USER))) {
+            return ServerResponse.createBySuccessMessage("用户已登录,不要重复登录");
+        }
         ServerResponse<String> response = userService.login(username, password);
         if (response.isSuccess()) {
             session.setAttribute(Const.CURRENT_USER, response.getData());
+            servletResponse.setStatus(HttpServletResponse.SC_CREATED);
         }
         return response;
     }
@@ -51,15 +56,23 @@ public class UserController {
     @ApiOperation("用户注册")
     @ApiImplicitParam(name = "user", value = "用户注册信息", required = true, dataType = "user")
     @PostMapping("/user")
-    public ServerResponse<String> register(@RequestBody User user, ServletRequest request) {
-        return userService.register(user);
+    public ServerResponse<String> register(@RequestBody User user, HttpSession session) {
+        ServerResponse<String> response = userService.register(user);
+        if (response.isSuccess()) {
+            session.setAttribute(Const.CURRENT_USER, response.getData());
+        }
+        return response;
     }
 
     @DeleteMapping("/session")
     public ServerResponse<String> logout(HttpSession session) {
-        userService.logout(Const.CURRENT_USER.split("-")[0]);
-        session.removeAttribute(Const.CURRENT_USER);
-        return ServerResponse.createBySuccess();
+        String[] info = verifyUserLogin(session);
+        if (Objects.nonNull(info)) {
+            userService.logout(info[0]);
+            session.removeAttribute(Const.CURRENT_USER);
+            return ServerResponse.createBySuccess();
+        }
+        return ServerResponse.createBySuccessMessage("用户未登录或已过期");
     }
 
     @GetMapping("/user/valid")
@@ -68,12 +81,8 @@ public class UserController {
     }
 
     @GetMapping("/user/{userId}")
-    public ServerResponse<User> getUserInfo(HttpSession session) {
-        String[] info =  ((String)session.getAttribute(Const.CURRENT_USER)).split("-");
-        if (SessionCache.verifySessionID(info[0],info[1])) {
-            return userService.getInformation(Integer.valueOf(info[0]));
-        }
-        return ServerResponse.createByErrorMessage("用户未登录");
+    public ServerResponse<User> getUserInfo(HttpSession session, @PathVariable("userId") String userId) {
+        return userService.getInformation(Integer.valueOf(userId));
     }
 
     @GetMapping("/password/forget-password/question")
@@ -93,36 +102,18 @@ public class UserController {
     }
 
     @PutMapping("/user/{userId}/password")
-    public ServerResponse<String> resetPassword(HttpSession session, String oldPassword, String newPassword) {
-        String[] info =  ((String)session.getAttribute(Const.CURRENT_USER)).split("-");
-        if (!SessionCache.verifySessionID(info[0],info[1])) {
-            return ServerResponse.createByErrorMessage("用户未登录");
-        }
-        return userService.resetPassword(oldPassword, newPassword, info[0]);
+    public ServerResponse<String> resetPassword(HttpSession session, String oldPassword, String newPassword, @PathVariable("userId") String userId) {
+                return userService.resetPassword(oldPassword, newPassword, userId);
     }
 
     @PutMapping("/user/{userId}")
     public ServerResponse<User> updateInformation(HttpSession session, User user) {
-        User currentUser = (User) session.getAttribute(Const.CURRENT_USER);
-        if (currentUser == null) {
-            return ServerResponse.createByErrorMessage("用户未登录");
-        }
-        user.setId(currentUser.getId());
-        user.setUsername(currentUser.getUsername());
-        ServerResponse<User> response = userService.updateInformation(user);
-        if (response.isSuccess()) {
-            session.setAttribute(Const.CURRENT_USER, response.getData());
-        }
-        return response;
+                return userService.updateInformation(user);
     }
 
     @GetMapping("/user/{userId}/info")
-    public ServerResponse<User> getInformation(HttpSession session) {
-        User currentUser = (User) session.getAttribute(Const.CURRENT_USER);
-        if (currentUser == null) {
-            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), "未登录,需要强制登录status=10");
-        }
-        return userService.getInformation(currentUser.getId());
+    public ServerResponse<User> getInformation(HttpSession session, @PathVariable("userId") String userId) {
+                return userService.getInformation(Integer.valueOf(userId));
     }
 
 

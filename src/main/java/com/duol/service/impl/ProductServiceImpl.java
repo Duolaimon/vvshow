@@ -9,8 +9,6 @@ import com.duol.pojo.Category;
 import com.duol.pojo.Product;
 import com.duol.service.CategoryService;
 import com.duol.service.ProductService;
-import com.duol.util.DateTimeUtil;
-import com.duol.util.PropertiesUtil;
 import com.duol.vo.ProductDetailVo;
 import com.duol.vo.ProductListVo;
 import com.github.pagehelper.PageHelper;
@@ -90,36 +88,10 @@ public class ProductServiceImpl implements ProductService {
         if (product == null) {
             return ServerResponse.createByErrorMessage("产品已下架或删除");
         }
-        ProductDetailVo productDetailVo = assembleProductDetailVo(product);
+        ProductDetailVo productDetailVo = ProductDetailVo.assembleProductDetailVo(product,categoryMapper);
         return ServerResponse.createBySuccess(productDetailVo);
     }
 
-    private ProductDetailVo assembleProductDetailVo(Product product) {
-        ProductDetailVo productDetailVo = new ProductDetailVo();
-        productDetailVo.setId(product.getId());
-        productDetailVo.setSubtitle(product.getSubtitle());
-        productDetailVo.setPrice(product.getPrice());
-        productDetailVo.setMainImage(product.getMainImage());
-        productDetailVo.setSubtitle(product.getSubImages());
-        productDetailVo.setCategoryId(product.getCategoryId());
-        productDetailVo.setDetail(product.getDetail());
-        productDetailVo.setName(product.getName());
-        productDetailVo.setStatus(product.getStatus());
-        productDetailVo.setStock(product.getStock());
-        //TODO
-        productDetailVo.setImageHost(PropertiesUtil.getProperty("", ""));
-
-        Category category = categoryMapper.selectByPrimaryKey(product.getCategoryId());
-        if (category == null) {
-            productDetailVo.setParentCategoryId(0);
-        } else {
-            productDetailVo.setParentCategoryId(category.getParentId());
-        }
-
-        productDetailVo.setCreateTime(DateTimeUtil.dateToStr(product.getCreateTime()));
-        productDetailVo.setUpdateTime(DateTimeUtil.dateToStr(product.getUpdateTime()));
-        return productDetailVo;
-    }
 
     @Override
     public ServerResponse<PageInfo> getProductList(int pageNum, int pageSize) {
@@ -128,26 +100,14 @@ public class ProductServiceImpl implements ProductService {
         return getPageInfoServerResponse(productList);
     }
 
-    private ProductListVo assembleProductListVo(Product product) {
-        ProductListVo productListVo = new ProductListVo();
-        productListVo.setId(product.getId());
-        productListVo.setName(product.getName());
-        productListVo.setCategoryId(product.getCategoryId());
-        productListVo.setImageHost(PropertiesUtil.getProperty("ftp.server.http.prefix", "http://img.happymmall.com/"));
-        productListVo.setMainImage(product.getMainImage());
-        productListVo.setPrice(product.getPrice());
-        productListVo.setSubtitle(product.getSubtitle());
-        productListVo.setStatus(product.getStatus());
-        return productListVo;
-    }
 
     @Override
     public ServerResponse<PageInfo> searchProduct(String productName, Integer productId, int pageNum, int pageSize) {
-        PageHelper.startPage(pageNum, pageSize);
         String name = "";
         if (StringUtils.isNotBlank(productName)) {
             name = "%" + productName + "%";
         }
+        PageHelper.startPage(pageNum, pageSize);
         List<Product> productList = productMapper.selectByNameAndProductId(name, productId);
         return getPageInfoServerResponse(productList);
     }
@@ -164,7 +124,7 @@ public class ProductServiceImpl implements ProductService {
         if (product.getStatus() != Const.ProductStatusEnum.ON_SALE.getCode()) {
             return ServerResponse.createByErrorMessage("产品已下架或者删除");
         }
-        ProductDetailVo productDetailVo = assembleProductDetailVo(product);
+        ProductDetailVo productDetailVo = ProductDetailVo.assembleProductDetailVo(product,categoryMapper);
         return ServerResponse.createBySuccess(productDetailVo);
     }
 
@@ -191,25 +151,25 @@ public class ProductServiceImpl implements ProductService {
         PageHelper.startPage(pageNum, pageSize);
         //排序处理
         orderBy(orderBy);
-        List<Product> productList = productMapper.selectByNameAndCategoryIds(StringUtils.isBlank(keyword) ? null : keyword, categoryIdList.size() == 0 ? null : categoryIdList);
+        List<Product> productList = productMapper.selectByNameAndCategoryIds(keyword, categoryIdList.size() == 0 ? null : categoryIdList);
 
         return getPageInfoServerResponse(productList);
+    }
+
+    private ServerResponse<PageInfo> getPageInfoServerResponse(int pageNum, int pageSize) {
+        List<ProductListVo> productListVoList = Lists.newArrayList();
+        PageHelper.startPage(pageNum, pageSize);
+        PageInfo<ProductListVo> pageInfo = new PageInfo<>(productListVoList);
+        return ServerResponse.createBySuccess(pageInfo);
     }
 
     private ServerResponse<PageInfo> getPageInfoServerResponse(List<Product> productList) {
         List<ProductListVo> productListVoList = Lists.newArrayList();
         for (Product product : productList) {
-            ProductListVo productListVo = assembleProductListVo(product);
+            ProductListVo productListVo = ProductListVo.assembleProductListVo(product);
             productListVoList.add(productListVo);
         }
 
-        PageInfo<ProductListVo> pageInfo = new PageInfo<>(productListVoList);
-        return ServerResponse.createBySuccess(pageInfo);
-    }
-
-    private ServerResponse<PageInfo> getPageInfoServerResponse(int pageNum, int pageSize) {
-        PageHelper.startPage(pageNum, pageSize);
-        List<ProductListVo> productListVoList = Lists.newArrayList();
         PageInfo<ProductListVo> pageInfo = new PageInfo<>(productListVoList);
         return ServerResponse.createBySuccess(pageInfo);
     }
@@ -218,7 +178,7 @@ public class ProductServiceImpl implements ProductService {
         if (StringUtils.isNotBlank(orderBy)) {
             if (Const.ProductListOrderBy.PRICE_ASC_DESC.contains(orderBy)) {
                 String[] orderByArray = orderBy.split("_");
-                PageHelper.orderBy(orderByArray[0]+" "+orderByArray[1]);
+                PageHelper.orderBy(orderByArray[0] + " " + orderByArray[1]);
             }
         }
     }

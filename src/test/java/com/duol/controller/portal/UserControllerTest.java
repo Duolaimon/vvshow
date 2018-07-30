@@ -25,10 +25,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 
 
 /*
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+import static org.springframework.Ftp1.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.Ftp1.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.Ftp1.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.Ftp1.web.servlet.setup.MockMvcBuilders.*;
  */
 
 /**

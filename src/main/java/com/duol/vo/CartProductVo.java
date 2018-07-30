@@ -1,5 +1,12 @@
 package com.duol.vo;
 
+import com.duol.common.Const;
+import com.duol.dao.CartMapper;
+import com.duol.dao.ProductMapper;
+import com.duol.pojo.Cart;
+import com.duol.pojo.Product;
+import com.duol.util.BigDecimalUtil;
+
 import java.math.BigDecimal;
 
 /**
@@ -23,6 +30,48 @@ public class CartProductVo {
     private Integer productChecked;//此商品是否勾选
 
     private String limitQuantity;//限制数量的一个返回结果
+
+
+    public static CartProductVo getCartProductVo(Integer userId, CartMapper cartMapper, ProductMapper productMapper, Cart cartItem) {
+        CartProductVo cartProductVo = new CartProductVo();
+        cartProductVo.setId(cartItem.getId());
+        cartProductVo.setUserId(userId);
+        cartProductVo.setProductId(cartItem.getProductId());
+
+        Product product = productMapper.selectByPrimaryKey(cartItem.getProductId());
+        if (product != null) {
+            cartProductVo.setProductMainImage(product.getMainImage());
+            cartProductVo.setProductName(product.getName());
+            cartProductVo.setProductSubtitle(product.getSubtitle());
+            cartProductVo.setProductStatus(product.getStatus());
+            cartProductVo.setProductPrice(product.getPrice());
+            cartProductVo.setProductStock(product.getStock());
+            //判断库存
+            int buyLimitCount;
+            if (product.getStock() >= cartItem.getQuantity()) {
+                //库存充足的时候
+                buyLimitCount = cartItem.getQuantity();
+                cartProductVo.setLimitQuantity(Const.Cart.LIMIT_NUM_SUCCESS);
+            } else {
+                buyLimitCount = product.getStock();
+                cartProductVo.setLimitQuantity(Const.Cart.LIMIT_NUM_FAIL);
+                //购物车中更新有效库存
+                updateQuantity(cartItem, buyLimitCount, cartMapper);
+            }
+            cartProductVo.setQuantity(buyLimitCount);
+            //计算总价
+            cartProductVo.setProductTotalPrice(BigDecimalUtil.mul(product.getPrice().doubleValue(), cartProductVo.getQuantity()));
+            cartProductVo.setProductChecked(cartItem.getChecked());
+        }
+        return cartProductVo;
+    }
+
+    private static void updateQuantity(Cart cartItem, int buyLimitCount, CartMapper cartMapper) {
+        Cart cartForQuantity = new Cart();
+        cartForQuantity.setId(cartItem.getId());
+        cartForQuantity.setQuantity(buyLimitCount);
+        cartMapper.updateByPrimaryKeySelective(cartForQuantity);
+    }
 
     public Integer getId() {
         return id;

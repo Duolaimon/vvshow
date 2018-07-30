@@ -4,30 +4,23 @@ import com.alipay.api.AlipayApiException;
 import com.alipay.api.internal.util.AlipaySignature;
 import com.alipay.demo.trade.config.Configs;
 import com.duol.common.Const;
-import com.duol.common.ResponseCode;
 import com.duol.common.ServerResponse;
-import com.duol.pojo.User;
 import com.duol.service.OrderService;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
  * @author Duolaimon
  * 18-7-17 上午9:14
  */
-@Controller
-@RequestMapping("/order/")
+@RestController
+@RequestMapping("/orders")
 public class OrderController {
 
     private static final Logger logger = LoggerFactory.getLogger(OrderController.class);
@@ -40,79 +33,53 @@ public class OrderController {
     }
 
 
-    @RequestMapping("create.do")
-    @ResponseBody
-    public ServerResponse create(HttpSession session, Integer shippingId) {
-        User user = (User) session.getAttribute(Const.CURRENT_USER);
-        if (user == null) {
-            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), ResponseCode.NEED_LOGIN.getDesc());
-        }
-        return orderService.createOrder(user.getId(), shippingId);
+    @PostMapping("/{shippingId}/{userId}")
+    public ServerResponse create(@PathVariable("shippingId") Integer shippingId,
+                                 @PathVariable("userId") Integer userId) {
+        return orderService.createOrder(userId, shippingId);
     }
 
 
-    @RequestMapping("cancel.do")
-    @ResponseBody
-    public ServerResponse cancel(HttpSession session, Long orderNo) {
-        User user = (User) session.getAttribute(Const.CURRENT_USER);
-        if (user == null) {
-            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), ResponseCode.NEED_LOGIN.getDesc());
-        }
-        return orderService.cancel(user.getId(), orderNo);
+    @DeleteMapping("/{orderNo}/{userId}")
+    public ServerResponse cancel(@PathVariable("orderNo") Long orderNo,
+                                 @PathVariable("userId") Integer userId) {
+        return orderService.cancel(userId, orderNo);
     }
 
 
-    @RequestMapping("get_order_cart_product.do")
-    @ResponseBody
-    public ServerResponse getOrderCartProduct(HttpSession session) {
-        User user = (User) session.getAttribute(Const.CURRENT_USER);
-        if (user == null) {
-            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), ResponseCode.NEED_LOGIN.getDesc());
-        }
-        return orderService.getOrderCartProduct(user.getId());
+    @GetMapping("/carts/{userId}")
+    public ServerResponse getOrderCartProduct(@PathVariable("userId") Integer userId) {
+        return orderService.getOrderCartProduct(userId);
     }
 
 
-    @RequestMapping("detail.do")
-    @ResponseBody
-    public ServerResponse detail(HttpSession session, Long orderNo) {
-        User user = (User) session.getAttribute(Const.CURRENT_USER);
-        if (user == null) {
-            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), ResponseCode.NEED_LOGIN.getDesc());
-        }
-        return orderService.getOrderDetail(user.getId(), orderNo);
+    @GetMapping("/{orderNo}/{userId}")
+    public ServerResponse detail(@PathVariable("orderNo") Long orderNo,
+                                 @PathVariable("userId") Integer userId) {
+        return orderService.getOrderDetail(userId, orderNo);
     }
 
-    @RequestMapping("list.do")
-    @ResponseBody
-    public ServerResponse list(HttpSession session, @RequestParam(value = "pageNum", defaultValue = "1") int pageNum, @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
-        User user = (User) session.getAttribute(Const.CURRENT_USER);
-        if (user == null) {
-            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), ResponseCode.NEED_LOGIN.getDesc());
-        }
-        return orderService.getOrderList(user.getId(), pageNum, pageSize);
+    @GetMapping("/{userId}")
+    public ServerResponse list(@PathVariable("userId") Integer userId, @RequestParam(value = "pageNum", defaultValue = "1") int pageNum, @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
+        return orderService.getOrderList(userId, pageNum, pageSize);
     }
 
 
-    @RequestMapping("pay.do")
+    @PutMapping("/{orderNo}/{userId}")
     @ResponseBody
-    public ServerResponse pay(HttpSession session, Long orderNo, HttpServletRequest request) {
-        User user = (User) session.getAttribute(Const.CURRENT_USER);
-        if (user == null) {
-            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), ResponseCode.NEED_LOGIN.getDesc());
-        }
+    public ServerResponse pay(@PathVariable("orderNo") Long orderNo, HttpServletRequest request, @PathVariable("userId") Integer userId) {
         String path = request.getSession().getServletContext().getRealPath("upload");
-        return orderService.pay(orderNo, user.getId(), path);
+        return orderService.pay(orderNo, userId, path);
     }
 
-    @RequestMapping("alipay_callback.do")
+    @GetMapping("/alipay_callback.do")
     @ResponseBody
     public Object alipayCallback(HttpServletRequest request) {
         Map<String, String> params = Maps.newHashMap();
 
         Map requestParams = request.getParameterMap();
-        for (Iterator iterator = requestParams.keySet().iterator(); iterator.hasNext(); ) {
-            String name = (String) iterator.next();
+        for (Object o : requestParams.keySet()) {
+            String name = (String) o;
             String[] values = (String[]) requestParams.get(name);
             String valueStr = "";
             for (int i = 0; i < values.length; i++) {
@@ -148,15 +115,10 @@ public class OrderController {
     }
 
 
-    @RequestMapping("query_order_pay_status.do")
+    @GetMapping("query_order_pay_status.do")
     @ResponseBody
-    public ServerResponse<Boolean> queryOrderPayStatus(HttpSession session, Long orderNo) {
-        User user = (User) session.getAttribute(Const.CURRENT_USER);
-        if (user == null) {
-            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), ResponseCode.NEED_LOGIN.getDesc());
-        }
-
-        ServerResponse serverResponse = orderService.queryOrderPayStatus(user.getId(), orderNo);
+    public ServerResponse<Boolean> queryOrderPayStatus(Long orderNo, @RequestParam("userId") Integer userId) {
+        ServerResponse serverResponse = orderService.queryOrderPayStatus(userId, orderNo);
         if (serverResponse.isSuccess()) {
             return ServerResponse.createBySuccess(true);
         }

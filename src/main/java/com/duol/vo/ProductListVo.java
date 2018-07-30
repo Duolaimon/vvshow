@@ -1,5 +1,8 @@
 package com.duol.vo;
 
+import com.duol.pojo.Product;
+import com.duol.util.PropertiesUtil;
+
 import java.math.BigDecimal;
 
 /**
@@ -18,6 +21,19 @@ public class ProductListVo {
     private Integer status;
 
     private String imageHost;
+
+    public static ProductListVo assembleProductListVo(Product product) {
+        ProductListVo productListVo = new ProductListVo();
+        productListVo.setId(product.getId());
+        productListVo.setName(product.getName());
+        productListVo.setCategoryId(product.getCategoryId());
+        productListVo.setImageHost(PropertiesUtil.getProperty("ftp.server.http.prefix", "http://img.happymmall.com/"));
+        productListVo.setMainImage(product.getMainImage());
+        productListVo.setPrice(product.getPrice());
+        productListVo.setSubtitle(product.getSubtitle());
+        productListVo.setStatus(product.getStatus());
+        return productListVo;
+    }
 
     public Integer getId() {
         return id;

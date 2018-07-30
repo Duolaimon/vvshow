@@ -1,7 +1,6 @@
 package com.duol.controller.backend;
 
 import com.duol.common.Const;
-import com.duol.common.ResponseCode;
 import com.duol.common.ServerResponse;
 import com.duol.pojo.Product;
 import com.duol.pojo.User;
@@ -12,22 +11,20 @@ import com.duol.util.PropertiesUtil;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.Map;
+
 /**
  * @author Duolaimon
  * 18-7-14 下午9:06
  */
-@Controller
-@RequestMapping("/manage/product")
+@RestController
+@RequestMapping("/manage")
 public class ProductManageController {
 
     private final UserService userService;
@@ -41,112 +38,54 @@ public class ProductManageController {
         this.fileService = fileService;
     }
 
-    @RequestMapping("save.do")
-    @ResponseBody
-    public ServerResponse productSave(HttpSession session, Product product) {
-        User user = (User) session.getAttribute(Const.CURRENT_USER);
-        if (user == null) {
-            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), "用户未登录,请登录管理员");
-
-        }
-        if (userService.checkAdminRole(user).isSuccess()) {
-            //填充我们增加产品的业务逻辑
-            return productService.saveOrUpdateProduct(product);
-        } else {
-            return ServerResponse.createByErrorMessage("无权限操作");
-        }
+    @PostMapping("/product")
+    public ServerResponse productSave(Product product) {
+        return productService.saveOrUpdateProduct(product);
     }
 
-    @RequestMapping("set_sale_status.do")
-    @ResponseBody
-    public ServerResponse setSaleStatus(HttpSession session, Integer productId, Integer status) {
-        User user = (User) session.getAttribute(Const.CURRENT_USER);
-        if (user == null) {
-            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), "用户未登录,请登录管理员");
-
-        }
-        if (userService.checkAdminRole(user).isSuccess()) {
-            return productService.setSaleStatus(productId, status);
-        } else {
-            return ServerResponse.createByErrorMessage("无权限操作");
-        }
+    @PutMapping("/product/{productId}/status")
+    public ServerResponse setSaleStatus(@PathVariable("productId") Integer productId, Integer status) {
+        return productService.setSaleStatus(productId, status);
     }
 
-    @RequestMapping("detail.do")
-    @ResponseBody
-    public ServerResponse getDetail(HttpSession session, Integer productId) {
-        User user = (User) session.getAttribute(Const.CURRENT_USER);
-        if (user == null) {
-            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), "用户未登录,请登录管理员");
-
-        }
-        if (userService.checkAdminRole(user).isSuccess()) {
-            //填充业务
-            return productService.manageProductDetail(productId);
-
-        } else {
-            return ServerResponse.createByErrorMessage("无权限操作");
-        }
+    @GetMapping("/product/{productId}")
+    public ServerResponse getDetail(@PathVariable("productId") Integer productId) {
+        return productService.manageProductDetail(productId);
     }
 
-    @RequestMapping("list.do")
-    @ResponseBody
-    public ServerResponse getList(HttpSession session, @RequestParam(value = "pageNum", defaultValue = "1") int pageNum, @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
-        User user = (User) session.getAttribute(Const.CURRENT_USER);
-        if (user == null) {
-            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), "用户未登录,请登录管理员");
-
-        }
-        if (userService.checkAdminRole(user).isSuccess()) {
-            //填充业务
-            return productService.getProductList(pageNum, pageSize);
-        } else {
-            return ServerResponse.createByErrorMessage("无权限操作");
-        }
+    @GetMapping("/products")
+    public ServerResponse getList(@RequestParam(value = "pageNum", defaultValue = "1") int pageNum,
+                                  @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
+        return productService.getProductList(pageNum, pageSize);
     }
 
-    @RequestMapping("search.do")
-    @ResponseBody
-    public ServerResponse productSearch(HttpSession session, String productName, Integer productId, @RequestParam(value = "pageNum", defaultValue = "1") int pageNum, @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
-        User user = (User) session.getAttribute(Const.CURRENT_USER);
-        if (user == null) {
-            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), "用户未登录,请登录管理员");
-
-        }
-        if (userService.checkAdminRole(user).isSuccess()) {
-            //填充业务
-            return productService.searchProduct(productName, productId, pageNum, pageSize);
-        } else {
-            return ServerResponse.createByErrorMessage("无权限操作");
-        }
+    @GetMapping("/product/search")
+    public ServerResponse productSearch(String productName,
+                                        Integer productId,
+                                        @RequestParam(value = "pageNum", defaultValue = "1") int pageNum,
+                                        @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
+        return productService.searchProduct(productName, productId, pageNum, pageSize);
     }
 
-    @RequestMapping("upload.do")
-    @ResponseBody
-    public ServerResponse upload(HttpSession session, @RequestParam(value = "upload_file", required = false) MultipartFile file, HttpServletRequest request) {
-        User user = (User) session.getAttribute(Const.CURRENT_USER);
-        if (user == null) {
-            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), "用户未登录,请登录管理员");
-        }
-        if (userService.checkAdminRole(user).isSuccess()) {
-            String path = request.getSession().getServletContext().getRealPath("upload");
-            String targetFileName = fileService.upload(file, path);
-            String url = PropertiesUtil.getProperty("ftp.server.http.prefix") + targetFileName;
+    @PostMapping("/product/img")
+    public ServerResponse upload(HttpSession session,
+                                 @RequestParam(value = "upload_file", required = false) MultipartFile file,
+                                 HttpServletRequest request) {
+        //todo
+        String path = request.getSession().getServletContext().getRealPath("upload");
+        String targetFileName = fileService.upload(file, path);
+        String url = PropertiesUtil.getProperty("ftp.server.http.prefix") + targetFileName;
 
-            Map<String,String> fileMap = Maps.newHashMap();
-            fileMap.put("uri", targetFileName);
-            fileMap.put("url", url);
-            return ServerResponse.createBySuccess(fileMap);
-        } else {
-            return ServerResponse.createByErrorMessage("无权限操作");
-        }
+        Map<String, String> fileMap = Maps.newHashMap();
+        fileMap.put("uri", targetFileName);
+        fileMap.put("url", url);
+        return ServerResponse.createBySuccess(fileMap);
     }
 
 
     @RequestMapping("richtext_img_upload.do")
-    @ResponseBody
     public Map richtextImgUpload(HttpSession session, @RequestParam(value = "upload_file", required = false) MultipartFile file, HttpServletRequest request, HttpServletResponse response) {
-        Map<String,Object> resultMap = Maps.newHashMap();
+        Map<String, Object> resultMap = Maps.newHashMap();
         User user = (User) session.getAttribute(Const.CURRENT_USER);
         if (user == null) {
             resultMap.put("success", false);

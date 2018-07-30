@@ -27,6 +27,13 @@
     from tb_category
     where parent_id=#{parentId}
   </select>
+  <select id="selectCategoryChildrenIdByParentId" resultType="java.lang.Integer">
+    select id from tb_category
+    where parent_id = #{parentId}
+  </select>
+  <select id="selectCategoryIdLists" resultType="com.duol.pojo.CategoryId2Pid">
+    select id,parent_id from tb_category;
+  </select>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
     delete from tb_category
     where id = #{id,jdbcType=INTEGER}
