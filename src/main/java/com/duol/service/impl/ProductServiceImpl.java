@@ -9,8 +9,8 @@ import com.duol.pojo.Category;
 import com.duol.pojo.Product;
 import com.duol.service.CategoryService;
 import com.duol.service.ProductService;
-import com.duol.vo.ProductDetailVo;
-import com.duol.vo.ProductListVo;
+import com.duol.vo.ProductDetailVO;
+import com.duol.vo.ProductListVO;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
@@ -80,7 +80,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ServerResponse<ProductDetailVo> manageProductDetail(Integer productId) {
+    public ServerResponse<ProductDetailVO> manageProductDetail(Integer productId) {
         if (productId == null) {
             return ServerResponse.createByErrorCodeMessage(ResponseCode.ILLEGAL_ARGUMENT.getCode(), ResponseCode.ILLEGAL_ARGUMENT.getDesc());
         }
@@ -88,7 +88,8 @@ public class ProductServiceImpl implements ProductService {
         if (product == null) {
             return ServerResponse.createByErrorMessage("产品已下架或删除");
         }
-        ProductDetailVo productDetailVo = ProductDetailVo.assembleProductDetailVo(product,categoryMapper);
+        Category category = categoryMapper.selectByPrimaryKey(product.getCategoryId());
+        ProductDetailVO productDetailVo = ProductDetailVO.assembleProductDetailVO(product, category == null ? 0 : category.getId());
         return ServerResponse.createBySuccess(productDetailVo);
     }
 
@@ -113,7 +114,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ServerResponse<ProductDetailVo> getProductDetail(Integer productId) {
+    public ServerResponse<ProductDetailVO> getProductDetail(Integer productId) {
         if (productId == null) {
             return ServerResponse.createByErrorCodeMessage(ResponseCode.ILLEGAL_ARGUMENT.getCode(), ResponseCode.ILLEGAL_ARGUMENT.getDesc());
         }
@@ -124,7 +125,8 @@ public class ProductServiceImpl implements ProductService {
         if (product.getStatus() != Const.ProductStatusEnum.ON_SALE.getCode()) {
             return ServerResponse.createByErrorMessage("产品已下架或者删除");
         }
-        ProductDetailVo productDetailVo = ProductDetailVo.assembleProductDetailVo(product,categoryMapper);
+        Category category = categoryMapper.selectByPrimaryKey(product.getCategoryId());
+        ProductDetailVO productDetailVo = ProductDetailVO.assembleProductDetailVO(product, category == null ? 0 : category.getId());
         return ServerResponse.createBySuccess(productDetailVo);
     }
 
@@ -157,20 +159,20 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private ServerResponse<PageInfo> getPageInfoServerResponse(int pageNum, int pageSize) {
-        List<ProductListVo> productListVoList = Lists.newArrayList();
+        List<ProductListVO> productListVoList = Lists.newArrayList();
         PageHelper.startPage(pageNum, pageSize);
-        PageInfo<ProductListVo> pageInfo = new PageInfo<>(productListVoList);
+        PageInfo<ProductListVO> pageInfo = new PageInfo<>(productListVoList);
         return ServerResponse.createBySuccess(pageInfo);
     }
 
     private ServerResponse<PageInfo> getPageInfoServerResponse(List<Product> productList) {
-        List<ProductListVo> productListVoList = Lists.newArrayList();
+        List<ProductListVO> productListVoList = Lists.newArrayList();
         for (Product product : productList) {
-            ProductListVo productListVo = ProductListVo.assembleProductListVo(product);
+            ProductListVO productListVo = ProductListVO.assembleProductListVo(product);
             productListVoList.add(productListVo);
         }
 
-        PageInfo<ProductListVo> pageInfo = new PageInfo<>(productListVoList);
+        PageInfo<ProductListVO> pageInfo = new PageInfo<>(productListVoList);
         return ServerResponse.createBySuccess(pageInfo);
     }
 

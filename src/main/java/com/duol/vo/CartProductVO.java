@@ -13,7 +13,7 @@ import java.math.BigDecimal;
  * @author Duolaimon
  * 18-7-15 下午8:50
  */
-public class CartProductVo {
+public class CartProductVO {
     //结合了产品和购物车的一个抽象对象
 
     private Integer id;
@@ -32,8 +32,8 @@ public class CartProductVo {
     private String limitQuantity;//限制数量的一个返回结果
 
 
-    public static CartProductVo getCartProductVo(Integer userId, CartMapper cartMapper, ProductMapper productMapper, Cart cartItem) {
-        CartProductVo cartProductVo = new CartProductVo();
+    public static CartProductVO getCartProductVo(Integer userId, CartMapper cartMapper, ProductMapper productMapper, Cart cartItem) {
+        CartProductVO cartProductVo = new CartProductVO();
         cartProductVo.setId(cartItem.getId());
         cartProductVo.setUserId(userId);
         cartProductVo.setProductId(cartItem.getProductId());

@@ -149,7 +149,13 @@
       </foreach>
     </if>
   </delete>
-
+  <delete id="deleteCartsByPrimaryKey" parameterType="list">
+    delete from tb_cart
+    where id in
+    <foreach collection="cartList" index="index" item="item" separator="," open="(" close=")">
+      #{item.getId}
+    </foreach>
+  </delete>
 
 
   <update id="checkedOrUncheckedProduct" parameterType="map">

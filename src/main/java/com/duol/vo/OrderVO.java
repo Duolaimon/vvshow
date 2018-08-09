@@ -5,11 +5,13 @@ import com.duol.dao.ShippingMapper;
 import com.duol.pojo.Order;
 import com.duol.pojo.OrderItem;
 import com.duol.pojo.Shipping;
+import com.duol.util.BaseVOUtil;
 import com.duol.util.DateTimeUtil;
 import com.duol.util.PropertiesUtil;
 import com.google.common.collect.Lists;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -17,7 +19,7 @@ import java.util.List;
  * 18-7-16 下午3:46
  */
 @SuppressWarnings("unused")
-public class OrderVo {
+public class OrderVO {
 
     private Long orderNo;
 
@@ -44,49 +46,38 @@ public class OrderVo {
     private String createTime;
 
     //订单的明细
-    private List<OrderItemVo> orderItemVoList;
+    private List<OrderItemVO> orderItemVOList;
 
     private String imageHost;
     private Integer shippingId;
     private String receiverName;
 
-    private ShippingVo shippingVo;
+    private ShippingVO shippingVo;
 
-    public static OrderVo assembleOrderVo(Order order, List<OrderItem> orderItemList, ShippingMapper shippingMapper) {
-        OrderVo orderVo = new OrderVo();
-        orderVo.setOrderNo(order.getOrderNo());
-        orderVo.setPayment(order.getPayment());
-        orderVo.setPaymentType(order.getPaymentType());
+    public static OrderVO assembleOrderVO(Order order, List<OrderItem> orderItemList, ShippingMapper shippingMapper) {
+        OrderVO orderVo = BaseVOUtil.parse(order, OrderVO.class);
+
         orderVo.setPaymentTypeDesc(Const.PaymentTypeEnum.codeOf(order.getPaymentType()).getValue());
-
-        orderVo.setPostage(order.getPostage());
-        orderVo.setStatus(order.getStatus());
         orderVo.setStatusDesc(Const.OrderStatusEnum.codeOf(order.getStatus()).getValue());
 
         orderVo.setShippingId(order.getShippingId());
         Shipping shipping = shippingMapper.selectByPrimaryKey(order.getShippingId());
         if (shipping != null) {
             orderVo.setReceiverName(shipping.getReceiverName());
-            orderVo.setShippingVo(ShippingVo.assembleShippingVo(shipping));
+            orderVo.setShippingVo(BaseVOUtil.parse(shipping, ShippingVO.class));
         }
-
-        orderVo.setPaymentTime(DateTimeUtil.dateToStr(order.getPaymentTime()));
-        orderVo.setSendTime(DateTimeUtil.dateToStr(order.getSendTime()));
-        orderVo.setEndTime(DateTimeUtil.dateToStr(order.getEndTime()));
-        orderVo.setCreateTime(DateTimeUtil.dateToStr(order.getCreateTime()));
-        orderVo.setCloseTime(DateTimeUtil.dateToStr(order.getCloseTime()));
 
 
         orderVo.setImageHost(PropertiesUtil.getProperty("ftp.server.http.prefix"));
 
 
-        List<OrderItemVo> orderItemVoList = Lists.newArrayList();
+        List<OrderItemVO> orderItemVOList = Lists.newArrayList();
 
         for (OrderItem orderItem : orderItemList) {
-            OrderItemVo orderItemVo = OrderItemVo.assembleOrderItemVo(orderItem);
-            orderItemVoList.add(orderItemVo);
+            OrderItemVO orderItemVo = BaseVOUtil.parse(orderItem, OrderItemVO.class);
+            orderItemVOList.add(orderItemVo);
         }
-        orderVo.setOrderItemVoList(orderItemVoList);
+        orderVo.setOrderItemVOList(orderItemVOList);
         return orderVo;
     }
 
@@ -151,48 +142,48 @@ public class OrderVo {
         return paymentTime;
     }
 
-    public void setPaymentTime(String paymentTime) {
-        this.paymentTime = paymentTime;
+    public void setPaymentTime(Date paymentTime) {
+        this.paymentTime = DateTimeUtil.dateToStr(paymentTime);
     }
 
     public String getSendTime() {
         return sendTime;
     }
 
-    public void setSendTime(String sendTime) {
-        this.sendTime = sendTime;
+    public void setSendTime(Date sendTime) {
+        this.sendTime = DateTimeUtil.dateToStr(sendTime);
     }
 
     public String getEndTime() {
         return endTime;
     }
 
-    public void setEndTime(String endTime) {
-        this.endTime = endTime;
+    public void setEndTime(Date endTime) {
+        this.endTime = DateTimeUtil.dateToStr(endTime);
     }
 
     public String getCloseTime() {
         return closeTime;
     }
 
-    public void setCloseTime(String closeTime) {
-        this.closeTime = closeTime;
+    public void setCloseTime(Date closeTime) {
+        this.closeTime = DateTimeUtil.dateToStr(closeTime);
     }
 
     public String getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(String createTime) {
-        this.createTime = createTime;
+    public void setCreateTime(Date createTime) {
+        this.createTime = DateTimeUtil.dateToStr(createTime);
     }
 
-    public List<OrderItemVo> getOrderItemVoList() {
-        return orderItemVoList;
+    public List<OrderItemVO> getOrderItemVOList() {
+        return orderItemVOList;
     }
 
-    public void setOrderItemVoList(List<OrderItemVo> orderItemVoList) {
-        this.orderItemVoList = orderItemVoList;
+    public void setOrderItemVOList(List<OrderItemVO> orderItemVOList) {
+        this.orderItemVOList = orderItemVOList;
     }
 
     public String getImageHost() {
@@ -219,11 +210,11 @@ public class OrderVo {
         this.receiverName = receiverName;
     }
 
-    public ShippingVo getShippingVo() {
+    public ShippingVO getShippingVo() {
         return shippingVo;
     }
 
-    public void setShippingVo(ShippingVo shippingVo) {
+    public void setShippingVo(ShippingVO shippingVo) {
         this.shippingVo = shippingVo;
     }
 }

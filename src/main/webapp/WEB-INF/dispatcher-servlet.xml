@@ -33,6 +33,11 @@
         </mvc:message-converters>
     </mvc:annotation-driven>
 
+    <!--suppress UnparsedCustomBeanInspection -->
+    <!--跨域-->
+    <mvc:cors>
+        <mvc:mapping path="/**" allowed-methods="GET,PUT,POST,DELETE"/>
+    </mvc:cors>
 
     <!--suppress UnparsedCustomBeanInspection -->
     <mvc:resources mapping="swagger-ui.html" location="classpath:/META-INF/resources/swagger-ui.html"/>
@@ -42,13 +47,14 @@
     <bean name="applicationSwaggerConfig" class="com.duol.config.SwaggerConfig"/>
 
     <!--suppress UnparsedCustomBeanInspection -->
-    <mvc:interceptors>
+    <!--<mvc:interceptors>
         <mvc:interceptor>
             <mvc:mapping path="/user/**"/>
             <mvc:mapping path="/shipping/**"/>
             <mvc:mapping path="/orders/**"/>
             <mvc:mapping path="carts/**"/>
-            <!--<mvc:mapping path="/"-->
+            <mvc:exclude-mapping path="/user"/>
+            &lt;!&ndash;<mvc:mapping path="/"&ndash;&gt;
             <bean class="com.duol.interceptor.SessionInterceptor"/>
         </mvc:interceptor>
         <mvc:interceptor>
@@ -56,7 +62,7 @@
             <mvc:exclude-mapping path="/manage/session"/>
             <bean class="com.duol.interceptor.ManageInterceptor"/>
         </mvc:interceptor>
-    </mvc:interceptors>
+    </mvc:interceptors>-->
 
     <!-- 文件上传 -->
     <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">

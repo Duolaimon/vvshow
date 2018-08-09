@@ -2,7 +2,7 @@ package com.duol.controller.backend;
 
 import com.duol.common.ServerResponse;
 import com.duol.service.OrderService;
-import com.duol.vo.OrderVo;
+import com.duol.vo.OrderVO;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -32,7 +32,7 @@ public class OrderManageController {
 
     @GetMapping("/orders/detail")
     @ResponseBody
-    public ServerResponse<OrderVo> orderDetail(Long orderNo) {
+    public ServerResponse<OrderVO> orderDetail(Long orderNo) {
         return orderService.manageDetail(orderNo);
     }
 

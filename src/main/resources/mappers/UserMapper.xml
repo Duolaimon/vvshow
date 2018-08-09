@@ -65,6 +65,9 @@
         where email = #{email}
               and id != #{userId}
     </select>
+    <select id="selectIdByUsername" resultType="java.lang.Integer">
+        select id from tb_user where username=#{username}
+    </select>
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
         delete from tb_user
         where id = #{id,jdbcType=INTEGER}

@@ -16,32 +16,32 @@ import java.util.List;
  * @author Duolaimon
  * 18-7-15 下午8:50
  */
-public class CartVo {
-    private List<CartProductVo> cartProductVoList;
+public class CartVO {
+    private List<CartProductVO> cartProductVOList;
     private BigDecimal cartTotalPrice;
     private Boolean allChecked;//是否已经都勾选
     private String imageHost;
 
-    public static CartVo getCartVoLimit(Integer userId, CartMapper cartMapper, ProductMapper productMapper) {
-        CartVo cartVo = new CartVo();
+    public static CartVO getCartVoLimit(Integer userId, CartMapper cartMapper, ProductMapper productMapper) {
+        CartVO cartVo = new CartVO();
         List<Cart> cartList = cartMapper.selectCartByUserId(userId);
-        List<CartProductVo> cartProductVoList = Lists.newArrayList();
+        List<CartProductVO> cartProductVOList = Lists.newArrayList();
 
         BigDecimal cartTotalPrice = new BigDecimal("0");
 
         if (CollectionUtils.isNotEmpty(cartList)) {
             for (Cart cartItem : cartList) {
-                CartProductVo cartProductVo = CartProductVo.getCartProductVo(userId, cartMapper, productMapper, cartItem);
+                CartProductVO cartProductVo = CartProductVO.getCartProductVo(userId, cartMapper, productMapper, cartItem);
 
                 if (cartItem.getChecked() == Const.Cart.CHECKED) {
                     //如果已经勾选,增加到整个的购物车总价中
                     cartTotalPrice = BigDecimalUtil.add(cartTotalPrice.doubleValue(), cartProductVo.getProductTotalPrice().doubleValue());
                 }
-                cartProductVoList.add(cartProductVo);
+                cartProductVOList.add(cartProductVo);
             }
         }
         cartVo.setCartTotalPrice(cartTotalPrice);
-        cartVo.setCartProductVoList(cartProductVoList);
+        cartVo.setCartProductVOList(cartProductVOList);
         cartVo.setAllChecked(getAllCheckedStatus(userId, cartMapper));
         cartVo.setImageHost(PropertiesUtil.getProperty("ftp.server.http.prefix"));
 
@@ -58,12 +58,12 @@ public class CartVo {
 
     }
 
-    public List<CartProductVo> getCartProductVoList() {
-        return cartProductVoList;
+    public List<CartProductVO> getCartProductVOList() {
+        return cartProductVOList;
     }
 
-    public void setCartProductVoList(List<CartProductVo> cartProductVoList) {
-        this.cartProductVoList = cartProductVoList;
+    public void setCartProductVOList(List<CartProductVO> cartProductVOList) {
+        this.cartProductVOList = cartProductVOList;
     }
 
     public BigDecimal getCartTotalPrice() {

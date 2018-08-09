@@ -14,12 +14,12 @@ import java.util.Objects;
  * 18-7-18 下午7:50
  */
 @Component
-public class RedisCache<V> {
+public class RedisConnection<V> {
     private JedisConnectionFactory redisConnectionFactory;
     private StringRedisTemplate stringRedisTemplate;
     private RedisTemplate<String,V> redisTemplate;
 
-    public RedisCache() {
+    public RedisConnection() {
         redisConnectionFactory = new JedisConnectionFactory();
         redisConnectionFactory.setHostName(PropertiesUtil.getProperty("redis.hostname"));
         redisConnectionFactory.setPort(Integer.valueOf(Objects.requireNonNull(PropertiesUtil.getProperty("redis.port"))));

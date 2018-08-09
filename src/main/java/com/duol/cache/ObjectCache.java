@@ -23,7 +23,7 @@ public class ObjectCache {
     private static final String REDIS_OBJECT_PREFIX = "object:";
 
     @Autowired
-    public ObjectCache(RedisCache<String> redisCache) {
+    public ObjectCache(RedisConnection<String> redisCache) {
         operations = redisCache.hashOperations();
         hashMapper = new DecoratingStringHashMapper<>(new Jackson2HashMapper(true));
     }

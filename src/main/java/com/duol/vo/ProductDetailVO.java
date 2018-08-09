@@ -1,8 +1,7 @@
 package com.duol.vo;
 
-import com.duol.dao.CategoryMapper;
-import com.duol.pojo.Category;
 import com.duol.pojo.Product;
+import com.duol.util.BaseVOUtil;
 import com.duol.util.DateTimeUtil;
 import com.duol.util.PropertiesUtil;
 
@@ -12,7 +11,8 @@ import java.math.BigDecimal;
  * @author Duolaimon
  * 18-2-26 下午10:44
  */
-public class ProductDetailVo {
+public class ProductDetailVO {
+
     private Integer id;
     private Integer categoryId;
     private String name;
@@ -30,31 +30,17 @@ public class ProductDetailVo {
     private String imageHost;
     private Integer parentCategoryId;
 
-    public static ProductDetailVo assembleProductDetailVo(Product product, Integer categoryId) {
-        ProductDetailVo productDetailVo = new ProductDetailVo();
-        productDetailVo.setId(product.getId());
-        productDetailVo.setSubtitle(product.getSubtitle());
-        productDetailVo.setPrice(product.getPrice());
-        productDetailVo.setMainImage(product.getMainImage());
-        productDetailVo.setSubtitle(product.getSubImages());
-        productDetailVo.setCategoryId(product.getCategoryId());
-        productDetailVo.setDetail(product.getDetail());
-        productDetailVo.setName(product.getName());
-        productDetailVo.setStatus(product.getStatus());
-        productDetailVo.setStock(product.getStock());
+    public static ProductDetailVO assembleProductDetailVO(Product product, Integer categoryId) {
+        ProductDetailVO productDetailVO;
+        productDetailVO = BaseVOUtil.parse(product, ProductDetailVO.class);
         //TODO
-        productDetailVo.setImageHost(PropertiesUtil.getProperty("ftp.server.http.prefix", "image.vvshow.com/imgs"));
-        productDetailVo.setParentCategoryId(categoryId);
-        productDetailVo.setCreateTime(DateTimeUtil.dateToStr(product.getCreateTime()));
-        productDetailVo.setUpdateTime(DateTimeUtil.dateToStr(product.getUpdateTime()));
-        return productDetailVo;
+        productDetailVO.setImageHost(PropertiesUtil.getProperty("ftp.server.http.prefix", "image.vvshow.com/imgs"));
+        productDetailVO.setParentCategoryId(categoryId);
+        productDetailVO.setCreateTime(DateTimeUtil.dateToStr(product.getCreateTime()));
+        productDetailVO.setUpdateTime(DateTimeUtil.dateToStr(product.getUpdateTime()));
+        return productDetailVO;
     }
 
-
-    public static ProductDetailVo assembleProductDetailVo(Product product, CategoryMapper categoryMapper) {
-        Category category = categoryMapper.selectByPrimaryKey(product.getCategoryId());
-        return ProductDetailVo.assembleProductDetailVo(product, category == null ? 0 : category.getId());
-    }
 
     public Integer getId() {
         return id;

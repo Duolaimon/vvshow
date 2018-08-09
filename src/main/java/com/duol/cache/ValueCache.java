@@ -12,12 +12,13 @@ import java.util.concurrent.TimeUnit;
  * 18-7-18 下午7:35
  */
 public class ValueCache {
-    private static RedisCache<String> redisCache = new RedisCache<>();
-    private static ValueOperations<String,String> operations = redisCache.valueOperations();
+    private static RedisConnection<String> redisCache = new RedisConnection<>();
+    private static ValueOperations<String, String> operations = redisCache.valueOperations();
     private static final String USER_SESSION_PREFIX = "session:";
 
     public static final String USERNAME_PREFIX = "username:";
     public static final String TOKEN_PREFIX = "token:";
+    public static final String QR_CODE_PREFIX = "qr-code:";
 
     public static boolean verifySessionID(String userId, @NotNull String sessionID) {
         String value = operations.get(USER_SESSION_PREFIX + userId);
@@ -34,7 +35,7 @@ public class ValueCache {
 
     public static String cacheSessionID(String userId) {
         String UUID = getUUID();
-        cache(USER_SESSION_PREFIX + userId,UUID);
+        cache(USER_SESSION_PREFIX + userId, UUID);
         return UUID;
     }
 
@@ -44,7 +45,8 @@ public class ValueCache {
 
 
     public static void cache(String key, String uuid) {
-        operations.set(key,uuid,30,TimeUnit.MINUTES);
+//        operations.set(key, uuid, 30, TimeUnit.MINUTES);
+        operations.set(key, uuid, 30, TimeUnit.SECONDS);
     }
 
     public static String get(String key) {
@@ -52,7 +54,7 @@ public class ValueCache {
     }
 
     public static String getUUID() {
-        return UUID.randomUUID().toString().replace("-","").toUpperCase();
+        return UUID.randomUUID().toString().replace("-", "").toUpperCase();
 
     }
 

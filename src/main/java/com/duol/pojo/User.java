@@ -29,7 +29,7 @@ public class User implements Serializable {
     @ApiModelProperty(position = 7)
     private String answer;
 
-    @ApiModelProperty(position = 8)
+    @ApiModelProperty(position = 8,hidden = true)
     private Integer role;
 
     @ApiModelProperty(readOnly = true,position = 9)

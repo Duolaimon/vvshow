@@ -1,15 +1,15 @@
 package com.duol.vo;
 
-import com.duol.pojo.OrderItem;
 import com.duol.util.DateTimeUtil;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * @author Duolaimon
  * 18-7-16 下午3:46
  */
-public class OrderItemVo {
+public class OrderItemVO {
 
     private Long orderNo;
 
@@ -25,20 +25,6 @@ public class OrderItemVo {
     private BigDecimal totalPrice;
 
     private String createTime;
-
-    public static OrderItemVo assembleOrderItemVo(OrderItem orderItem) {
-        OrderItemVo orderItemVo = new OrderItemVo();
-        orderItemVo.setOrderNo(orderItem.getOrderNo());
-        orderItemVo.setProductId(orderItem.getProductId());
-        orderItemVo.setProductName(orderItem.getProductName());
-        orderItemVo.setProductImage(orderItem.getProductImage());
-        orderItemVo.setCurrentUnitPrice(orderItem.getCurrentUnitPrice());
-        orderItemVo.setQuantity(orderItem.getQuantity());
-        orderItemVo.setTotalPrice(orderItem.getTotalPrice());
-
-        orderItemVo.setCreateTime(DateTimeUtil.dateToStr(orderItem.getCreateTime()));
-        return orderItemVo;
-    }
 
     public Long getOrderNo() {
         return orderNo;
@@ -100,8 +86,8 @@ public class OrderItemVo {
         return createTime;
     }
 
-    public void setCreateTime(String createTime) {
-        this.createTime = createTime;
+    public void setCreateTime(Date createTime) {
+        this.createTime = DateTimeUtil.dateToStr(createTime);
     }
 
 }

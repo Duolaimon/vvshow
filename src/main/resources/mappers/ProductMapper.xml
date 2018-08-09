@@ -61,7 +61,14 @@
       </if>
     </where>
   </select>
-  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    <select id="selectListByIds" resultType="com.duol.pojo.Product" parameterType="list">
+      select * from tb_product
+      where id in
+      <foreach collection="list" item="item" separator="," open="(" close=")">
+        #{item}
+      </foreach>
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
     delete from tb_product
     where id = #{id,jdbcType=INTEGER}
   </delete>

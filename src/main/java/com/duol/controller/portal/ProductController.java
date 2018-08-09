@@ -2,7 +2,7 @@ package com.duol.controller.portal;
 
 import com.duol.common.ServerResponse;
 import com.duol.service.ProductService;
-import com.duol.vo.ProductDetailVo;
+import com.duol.vo.ProductDetailVO;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
  * 18-7-14 下午8:40
  */
 @Controller
-@RequestMapping("/product")
+@RequestMapping("/products")
 public class ProductController {
 
     private final ProductService productService;
@@ -26,11 +26,11 @@ public class ProductController {
 
     @GetMapping("/{productId}")
     @ResponseBody
-    public ServerResponse<ProductDetailVo> detail(@PathVariable("productId") Integer productId){
+    public ServerResponse<ProductDetailVO> detail(@PathVariable("productId") Integer productId){
         return productService.getProductDetail(productId);
     }
 
-    @GetMapping("/list")
+    @GetMapping("/")
     @ResponseBody
     public ServerResponse<PageInfo> list(@RequestParam(value = "keyword",required = false)String keyword,
                                          @RequestParam(value = "categoryId",required = false)Integer categoryId,

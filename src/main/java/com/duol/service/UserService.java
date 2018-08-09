@@ -49,7 +49,6 @@ public interface UserService {
      * 通过旧密码修改密码
      * @param oldPassword   旧密码
      * @param newPassword   新密码
-     * @param user          用户
      */
     ServerResponse<String> resetPassword(String oldPassword, String newPassword, String userId);
 

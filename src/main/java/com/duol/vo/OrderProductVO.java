@@ -7,17 +7,17 @@ import java.util.List;
  * @author Duolaimon
  * 18-7-16 下午3:50
  */
-public class OrderProductVo {
-    private List<OrderItemVo> orderItemVoList;
+public class OrderProductVO {
+    private List<OrderItemVO> orderItemVOList;
     private BigDecimal productTotalPrice;
     private String imageHost;
 
-    public List<OrderItemVo> getOrderItemVoList() {
-        return orderItemVoList;
+    public List<OrderItemVO> getOrderItemVOList() {
+        return orderItemVOList;
     }
 
-    public void setOrderItemVoList(List<OrderItemVo> orderItemVoList) {
-        this.orderItemVoList = orderItemVoList;
+    public void setOrderItemVOList(List<OrderItemVO> orderItemVOList) {
+        this.orderItemVOList = orderItemVOList;
     }
 
     public BigDecimal getProductTotalPrice() {

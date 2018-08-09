@@ -7,7 +7,7 @@ import com.duol.dao.CartMapper;
 import com.duol.dao.ProductMapper;
 import com.duol.pojo.Cart;
 import com.duol.service.CartService;
-import com.duol.vo.CartVo;
+import com.duol.vo.CartVO;
 import com.google.common.base.Splitter;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +31,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public ServerResponse<CartVo> add(Integer userId, Integer productId, Integer count) {
+    public ServerResponse<CartVO> add(Integer userId, Integer productId, Integer count) {
         if(productId == null || count == null){
             return ServerResponse.createByErrorCodeMessage(ResponseCode.ILLEGAL_ARGUMENT.getCode(),ResponseCode.ILLEGAL_ARGUMENT.getDesc());
         }
@@ -56,7 +56,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public ServerResponse<CartVo> update(Integer userId, Integer productId, Integer count) {
+    public ServerResponse<CartVO> update(Integer userId, Integer productId, Integer count) {
         if(productId == null || count == null){
             return ServerResponse.createByErrorCodeMessage(ResponseCode.ILLEGAL_ARGUMENT.getCode(),ResponseCode.ILLEGAL_ARGUMENT.getDesc());
         }
@@ -69,7 +69,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public ServerResponse<CartVo> deleteProduct(Integer userId, String productIds) {
+    public ServerResponse<CartVO> deleteProduct(Integer userId, String productIds) {
         List<String> productList = Splitter.on(",").splitToList(productIds);
         if(CollectionUtils.isEmpty(productList)){
             return ServerResponse.createByErrorCodeMessage(ResponseCode.ILLEGAL_ARGUMENT.getCode(),ResponseCode.ILLEGAL_ARGUMENT.getDesc());
@@ -79,13 +79,13 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public ServerResponse<CartVo> list(Integer userId) {
-        CartVo cartVo = CartVo.getCartVoLimit(userId,cartMapper,productMapper);
+    public ServerResponse<CartVO> list(Integer userId) {
+        CartVO cartVo = CartVO.getCartVoLimit(userId,cartMapper,productMapper);
         return ServerResponse.createBySuccess(cartVo);
     }
 
     @Override
-    public ServerResponse<CartVo> selectOrUnSelect(Integer userId, Integer productId, Integer checked) {
+    public ServerResponse<CartVO> selectOrUnSelect(Integer userId, Integer productId, Integer checked) {
         cartMapper.checkedOrUncheckedProduct(userId,productId,checked);
         return this.list(userId);
     }

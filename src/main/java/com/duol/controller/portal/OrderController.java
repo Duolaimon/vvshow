@@ -6,6 +6,7 @@ import com.alipay.demo.trade.config.Configs;
 import com.duol.common.Const;
 import com.duol.common.ServerResponse;
 import com.duol.service.OrderService;
+import com.duol.vo.OrderVO;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +35,8 @@ public class OrderController {
 
 
     @PostMapping("/{shippingId}/{userId}")
-    public ServerResponse create(@PathVariable("shippingId") Integer shippingId,
-                                 @PathVariable("userId") Integer userId) {
+    public ServerResponse<OrderVO> create(@PathVariable("shippingId") Integer shippingId,
+                                          @PathVariable("userId") Integer userId) {
         return orderService.createOrder(userId, shippingId);
     }
 

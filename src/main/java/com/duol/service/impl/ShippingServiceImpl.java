@@ -4,6 +4,8 @@ import com.duol.common.ServerResponse;
 import com.duol.dao.ShippingMapper;
 import com.duol.pojo.Shipping;
 import com.duol.service.ShippingService;
+import com.duol.util.BaseVOUtil;
+import com.duol.vo.ShippingVO;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Maps;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Duolaimon
@@ -29,7 +32,7 @@ public class ShippingServiceImpl implements ShippingService {
     @Override
     public ServerResponse add(Integer userId, Shipping shipping) {
         shipping.setUserId(userId);
-        int rowCount = shippingMapper.insert(shipping);
+        int rowCount = shippingMapper.insertSelective(shipping);
         if(rowCount > 0){
             Map<String,Integer> result = Maps.newHashMap();
             result.put("shippingId",shipping.getId());
@@ -63,14 +66,17 @@ public class ShippingServiceImpl implements ShippingService {
         if(shipping == null){
             return ServerResponse.createByErrorMessage("无法查询到该地址");
         }
-        return ServerResponse.createBySuccess("更新地址成功",shipping);
+        return ServerResponse.createBySuccess(shipping);
     }
 
     @Override
     public ServerResponse<PageInfo> list(Integer userId, int pageNum, int pageSize) {
         PageHelper.startPage(pageNum,pageSize);
         List<Shipping> shippingList = shippingMapper.selectByUserId(userId);
-        PageInfo<Shipping> pageInfo = new PageInfo<>(shippingList);
+        List<ShippingVO> shippingVOList = shippingList.stream()
+                .map(shipping -> BaseVOUtil.parse(shipping,ShippingVO.class))
+                .collect(Collectors.toList());
+        PageInfo<ShippingVO> pageInfo = new PageInfo<>(shippingVOList);
         return ServerResponse.createBySuccess(pageInfo);
     }
 }

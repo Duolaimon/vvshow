@@ -3,7 +3,11 @@ package com.duol.controller.portal;
 import com.duol.common.ServerResponse;
 import com.duol.pojo.Shipping;
 import com.duol.service.ShippingService;
+import com.duol.util.BaseVOUtil;
+import com.duol.vo.ShippingVO;
 import com.github.pagehelper.PageInfo;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,35 +28,35 @@ public class ShippingController {
 
 
     @PostMapping("{userId}")
-    @ResponseBody
-    public ServerResponse add(Shipping shipping, @PathVariable("userId") Integer userId) {
-        return shippingService.add(userId, shipping);
+    @ApiImplicitParams
+            ({@ApiImplicitParam(name = "shipping", value = "地址信息", dataType = "ShippingVO"),
+                    @ApiImplicitParam(name = "userId", value = "用户id", dataType = "int", paramType = "path")})
+    public ServerResponse add(@RequestBody ShippingVO shipping, @PathVariable("userId") Integer userId) {
+        return shippingService.add(userId, BaseVOUtil.parse(shipping,Shipping.class));
     }
 
 
     @DeleteMapping("{userId}")
-    @ResponseBody
     public ServerResponse del(Integer shippingId, @PathVariable("userId") Integer userId) {
         return shippingService.del(userId, shippingId);
     }
 
     @PutMapping("{userId}")
-    @ResponseBody
-    public ServerResponse update(Shipping shipping, @PathVariable("userId") Integer userId) {
-        return shippingService.update(userId, shipping);
+    public ServerResponse update(ShippingVO shipping, @PathVariable("userId") Integer userId) {
+        return shippingService.update(userId, BaseVOUtil.parse(shipping,Shipping.class));
     }
 
 
     @GetMapping("{userId}/{shippingId}")
-    @ResponseBody
-    public ServerResponse<Shipping> select(@PathVariable("shippingId") Integer shippingId,
+    public ServerResponse<ShippingVO> select(@PathVariable("shippingId") Integer shippingId,
                                            @PathVariable("userId") Integer userId) {
-        return shippingService.select(userId, shippingId);
+        ServerResponse response = shippingService.select(userId, shippingId);
+        ShippingVO shippingVO = BaseVOUtil.parse(response.getData(),ShippingVO.class);
+        return ServerResponse.createBySuccess(shippingVO);
     }
 
 
     @GetMapping("{userId}")
-    @ResponseBody
     public ServerResponse<PageInfo> list(@RequestParam(value = "pageNum", defaultValue = "1") int pageNum,
                                          @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
                                          @PathVariable("userId") Integer userId) {

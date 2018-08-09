@@ -32,8 +32,8 @@ public class SwaggerConfig {
                 .title("vvshow商城前台 APIs")
                 .description("前台用户")
                 .termsOfServiceUrl("测试")
-                .contact(new Contact("Duolaimon", "http://duolaimon.com", "q791227707@gmail.com"))
-                .version("v1.0")
+                .contact(new Contact("Duolaimon", "http://github.com/duolaimon/vvshow", "q791227707@gmail.com"))
+                .version("v2.0")
                 .build();
     }
 }

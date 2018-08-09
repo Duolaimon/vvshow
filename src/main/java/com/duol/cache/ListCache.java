@@ -18,7 +18,7 @@ public class ListCache<V> {
     private static final String REDIS_LIST_PREFIX = "list:";
 
     @Autowired
-    public ListCache(RedisCache<V> redisCache) {
+    public ListCache(RedisConnection<V> redisCache) {
         redisCache.initListTemplate();
         operations = redisCache.listOperations();
     }

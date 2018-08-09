@@ -58,6 +58,7 @@ public class UserServiceImpl implements UserService {
         if (userMapper.insert(user) < 1) {
             return ServerResponse.createByErrorMessage("注册失败");
         }
+        user.setId(userMapper.selectIdByUsername(user.getUsername()));
         return ServerResponse.createBySuccess("注册成功",loginSuccess(user));
     }
 

@@ -9,7 +9,7 @@ import java.math.BigDecimal;
  * @author Duolaimon
  * 18-4-13 下午1:12
  */
-public class ProductListVo {
+public class ProductListVO {
     private Integer id;
     private Integer categoryId;
 
@@ -22,8 +22,8 @@ public class ProductListVo {
 
     private String imageHost;
 
-    public static ProductListVo assembleProductListVo(Product product) {
-        ProductListVo productListVo = new ProductListVo();
+    public static ProductListVO assembleProductListVo(Product product) {
+        ProductListVO productListVo = new ProductListVO();
         productListVo.setId(product.getId());
         productListVo.setName(product.getName());
         productListVo.setCategoryId(product.getCategoryId());

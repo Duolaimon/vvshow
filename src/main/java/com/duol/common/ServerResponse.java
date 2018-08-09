@@ -1,5 +1,6 @@
 package com.duol.common;
 
+import io.swagger.annotations.ApiModelProperty;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
@@ -12,8 +13,11 @@ import java.io.Serializable;
 //保证序列化json的时候,如果是null的对象,key也会消失
 public class ServerResponse<T> implements Serializable {
 
+    @ApiModelProperty(position = 1)
     private int status;
+    @ApiModelProperty(position = 2)
     private String msg;
+    @ApiModelProperty(position = 3)
     private T data;
 
     private ServerResponse(int status) {
@@ -36,8 +40,9 @@ public class ServerResponse<T> implements Serializable {
         this.msg = msg;
     }
 
-    @JsonIgnore
     //使之不在json序列化结果当中
+    @JsonIgnore
+    @ApiModelProperty(hidden = true)
     public boolean isSuccess() {
         return this.status == ResponseCode.SUCCESS.getCode();
     }
@@ -74,6 +79,10 @@ public class ServerResponse<T> implements Serializable {
 
     public static <T> ServerResponse<T> createByError() {
         return new ServerResponse<>(ResponseCode.ERROR.getCode(), ResponseCode.ERROR.getDesc());
+    }
+
+    public static <T> ServerResponse<T> createByError(ServerResponse response) {
+        return new ServerResponse<>(response.getStatus(), response.getMsg());
     }
 
 

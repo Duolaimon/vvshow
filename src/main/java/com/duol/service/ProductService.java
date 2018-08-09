@@ -2,7 +2,7 @@ package com.duol.service;
 
 import com.duol.common.ServerResponse;
 import com.duol.pojo.Product;
-import com.duol.vo.ProductDetailVo;
+import com.duol.vo.ProductDetailVO;
 import com.github.pagehelper.PageInfo;
 
 /**
@@ -15,13 +15,13 @@ public interface ProductService {
 
     ServerResponse<String> setSaleStatus(Integer productId, Integer status);
 
-    ServerResponse<ProductDetailVo> manageProductDetail(Integer productId);
+    ServerResponse<ProductDetailVO> manageProductDetail(Integer productId);
 
     ServerResponse<PageInfo> getProductList(int pageNum, int pageSize);
 
     ServerResponse<PageInfo> searchProduct(String productName, Integer productId, int pageNum, int pageSize);
 
-    ServerResponse<ProductDetailVo> getProductDetail(Integer productId);
+    ServerResponse<ProductDetailVO> getProductDetail(Integer productId);
 
     ServerResponse<PageInfo> getProductByKeywordCategory(String keyword, Integer categoryId, int pageNum, int pageSize, String orderBy);
 
