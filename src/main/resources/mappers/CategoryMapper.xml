@@ -34,6 +34,10 @@
   <select id="selectCategoryIdLists" resultType="com.duol.pojo.CategoryId2Pid">
     select id,parent_id from tb_category;
   </select>
+  <select id="selectAllCategory" resultType="com.duol.pojo.Category">
+    select *
+    from tb_category;
+  </select>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
     delete from tb_category
     where id = #{id,jdbcType=INTEGER}

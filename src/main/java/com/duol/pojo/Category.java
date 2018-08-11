@@ -1,20 +1,29 @@
 package com.duol.pojo;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.Date;
 
 public class Category {
+    @ApiModelProperty(position = 1)
     private Integer id;
 
+    @ApiModelProperty(position = 2)
     private Integer parentId;
 
+    @ApiModelProperty(position = 3)
     private String name;
 
+    @ApiModelProperty(hidden = true)
     private Boolean status;
 
+    @ApiModelProperty(hidden = true)
     private Integer sortOrder;
 
+    @ApiModelProperty(hidden = true)
     private Date createTime;
 
+    @ApiModelProperty(hidden = true)
     private Date updateTime;
 
     public Category(Integer id, Integer parentId, String name, Boolean status, Integer sortOrder, Date createTime, Date updateTime) {

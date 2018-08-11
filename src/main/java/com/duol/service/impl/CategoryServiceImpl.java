@@ -81,6 +81,11 @@ public class CategoryServiceImpl implements CategoryService {
         return ServerResponse.createBySuccess(categoryList);
     }
 
+    public ServerResponse<List<Category>> getAllCategory() {
+        List<Category> categoryList = categoryMapper.selectAllCategory();
+        return ServerResponse.createBySuccess(categoryList);
+    }
+
     @Override
     public ServerResponse<List<Integer>> selectCategoryAndChildrenById(Integer categoryId) {
         cacheCategoryIdList(categoryId);
