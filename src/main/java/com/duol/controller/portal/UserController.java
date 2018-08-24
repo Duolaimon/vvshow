@@ -43,38 +43,43 @@ public class UserController {
     @ApiOperation(value = "用户登录")
     @PostMapping("/session")
     public ServerResponse<String> login(@RequestBody UserPwdVo user,
-                                        HttpSession session, HttpServletResponse servletResponse) {
+                                        HttpSession session, HttpServletResponse servletResponse, HttpServletRequest servletRequest) {
         String username = user.getUsername();
         String password = user.getPassword();
         logger.info("login: username:{},password:{}", username, password);
-        if (Objects.nonNull(session.getAttribute(Const.CURRENT_USER))) {
-            return ServerResponse.createBySuccessMessage("用户已登录,不要重复登录");
+        Cookie[] cookies = servletRequest.getCookies();
+        for (Cookie cookie :
+                cookies) {
+            if ("userId".equals(cookie.getName())) {
+                return ServerResponse.createBySuccessMessage("用户已登录,不要重复登录");
+            }
         }
         ServerResponse<String> response = userService.login(username, password);
-        doForClient(session, servletResponse, response);
+        doLogin(session, servletResponse, response);
         return response;
     }
 
     @ApiOperation("用户注册")
-    @ApiImplicitParam(name = "userInfoVo", value = "用户注册信息", required = true, dataType = "UserInfoVo")
+    @ApiImplicitParam(name = "loginVO", value = "用户注册信息", required = true, dataType = "LoginVO")
     @ApiResponse(code = 201, message = "注册成功")
     @PostMapping("/user")
-    public ServerResponse<String> register(@RequestBody UserInfoVo userInfoVo, HttpSession session,HttpServletResponse servletResponse) {
-        logger.info("register: username:{}", userInfoVo.getUsername());
-        ServerResponse<String> response = userService.register(BaseVOUtil.parse(userInfoVo, User.class));
-        doForClient(session,servletResponse,response);
+    public ServerResponse<String> register(@RequestBody LoginVO loginVO, HttpSession session, HttpServletResponse servletResponse) {
+        logger.info("register: username:{}", loginVO.getUsername());
+        ServerResponse<String> response = userService.register(BaseVOUtil.parse(loginVO, User.class));
+        doLogin(session, servletResponse, response);
         return response;
     }
 
-    private void doForClient(HttpSession session, HttpServletResponse servletResponse, ServerResponse<String> response) {
+    private void doLogin(HttpSession session, HttpServletResponse servletResponse, ServerResponse<String> response) {
         if (response.isSuccess()) {
             String[] info = response.getData().split("-");
-            Cookie cookie = new Cookie("userId",info[0]);
+            Cookie cookie = new Cookie("userId", info[0]);
             cookie.setHttpOnly(false);
-            cookie.setMaxAge(30*60);
+            cookie.setMaxAge(30 * 60);
             cookie.setPath("/");
             servletResponse.addCookie(cookie);
             session.setAttribute(Const.CURRENT_USER, response.getData());
+
 
             servletResponse.setStatus(HttpServletResponse.SC_CREATED);
         }
@@ -83,14 +88,22 @@ public class UserController {
 
     @ApiOperation(value = "用户注销")
     @DeleteMapping("/session")
-    public ServerResponse<String> logout(HttpSession session) {
+    public ServerResponse<String> logout(HttpSession session, HttpServletResponse response) {
         String[] info = verifyUserLogin(session);
         if (Objects.nonNull(info)) {
             userService.logout(info[0]);
             session.removeAttribute(Const.CURRENT_USER);
+            doLogout(response);
             return ServerResponse.createBySuccess();
         }
         return ServerResponse.createBySuccessMessage("用户未登录或已过期");
+    }
+
+    private void doLogout(HttpServletResponse response) {
+        Cookie cookie = new Cookie("userId", null);
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+        response.addCookie(cookie);
     }
 
     @ApiOperation(value = "用户校验")
@@ -105,9 +118,9 @@ public class UserController {
     @ApiOperation(value = "个人信息")
     @ApiImplicitParam(name = "userId", value = "用户id", required = true, paramType = "path")
     @GetMapping("/user/{userId}")
-    public ServerResponse<UserInfoVo> getUserInfo(HttpSession session, @PathVariable("userId") String userId) {
+    public ServerResponse<UserInfoVO> getUserInfo(HttpSession session, @PathVariable("userId") String userId) {
         User user = userService.getInformation(Integer.valueOf(userId)).getData();
-        return ServerResponse.createBySuccess(BaseVOUtil.parse(user, UserInfoVo.class));
+        return ServerResponse.createBySuccess(BaseVOUtil.parse(user, UserInfoVO.class));
     }
 
     @ApiOperation(value = "获得忘记密码问题")
@@ -140,9 +153,9 @@ public class UserController {
 
     @ApiOperation(value = "更新个人信息")
     @PutMapping("/user/{userId}")
-    public ServerResponse<UserInfoVo> updateInformation(HttpSession session, @RequestBody UserInfoVo userInfoVo) {
-        User user = userService.updateInformation(BaseVOUtil.parse(userInfoVo, User.class)).getData();
-        return ServerResponse.createBySuccess(BaseVOUtil.parse(user, UserInfoVo.class));
+    public ServerResponse<UserInfoVO> updateInformation(HttpSession session, @RequestBody UserInfoVO userInfoVO) {
+        User user = userService.updateInformation(BaseVOUtil.parse(userInfoVO, User.class)).getData();
+        return ServerResponse.createBySuccess(BaseVOUtil.parse(user, UserInfoVO.class));
     }
 
     @GetMapping("/verify-code")

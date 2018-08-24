@@ -8,12 +8,10 @@ import com.duol.util.BaseVOUtil;
 import com.duol.vo.ShippingVO;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -30,13 +28,11 @@ public class ShippingServiceImpl implements ShippingService {
     }
 
     @Override
-    public ServerResponse add(Integer userId, Shipping shipping) {
+    public ServerResponse<Integer> add(Integer userId, Shipping shipping) {
         shipping.setUserId(userId);
         int rowCount = shippingMapper.insertSelective(shipping);
         if(rowCount > 0){
-            Map<String,Integer> result = Maps.newHashMap();
-            result.put("shippingId",shipping.getId());
-            return ServerResponse.createBySuccess("新建地址成功",result);
+            return ServerResponse.createBySuccess("新建地址成功",shipping.getId());
         }
         return ServerResponse.createByErrorMessage("新建地址失败");
     }
@@ -51,7 +47,7 @@ public class ShippingServiceImpl implements ShippingService {
     }
 
     @Override
-    public ServerResponse update(Integer userId, Shipping shipping) {
+    public ServerResponse<String> update(Integer userId, Shipping shipping) {
         shipping.setUserId(userId);
         int rowCount = shippingMapper.updateByShipping(shipping);
         if(rowCount > 0){

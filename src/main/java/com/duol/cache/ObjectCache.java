@@ -20,7 +20,7 @@ public class ObjectCache {
     private HashOperations<String, String, String> operations;
     private HashMapper<Object, String, String> hashMapper;
 
-    private static final String REDIS_OBJECT_PREFIX = "object:";
+    public static final String REDIS_OBJECT_PREFIX = "object:";
 
     @Autowired
     public ObjectCache(RedisConnection<String> redisCache) {

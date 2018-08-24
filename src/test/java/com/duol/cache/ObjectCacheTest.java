@@ -16,7 +16,7 @@ public class ObjectCacheTest {
 
     @Before
     public void setup() {
-        objectCache = new ObjectCache(new RedisCache<>());
+        objectCache = new ObjectCache(new RedisConnection<>());
     }
     @Test
     public void cacheObject() {

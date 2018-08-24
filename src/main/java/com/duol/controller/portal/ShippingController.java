@@ -8,6 +8,7 @@ import com.duol.vo.ShippingVO;
 import com.github.pagehelper.PageInfo;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,35 +28,42 @@ public class ShippingController {
     }
 
 
+    @ApiOperation("新增收货地址")
     @PostMapping("{userId}")
     @ApiImplicitParams
             ({@ApiImplicitParam(name = "shipping", value = "地址信息", dataType = "ShippingVO"),
                     @ApiImplicitParam(name = "userId", value = "用户id", dataType = "int", paramType = "path")})
-    public ServerResponse add(@RequestBody ShippingVO shipping, @PathVariable("userId") Integer userId) {
-        return shippingService.add(userId, BaseVOUtil.parse(shipping,Shipping.class));
+    public ServerResponse<Integer> add(@RequestBody ShippingVO shipping, @PathVariable("userId") Integer userId) {
+        return shippingService.add(userId, BaseVOUtil.parse(shipping, Shipping.class));
     }
 
 
-    @DeleteMapping("{userId}")
-    public ServerResponse del(Integer shippingId, @PathVariable("userId") Integer userId) {
+    @ApiOperation("删除收货地址")
+    @DeleteMapping("{userId}/{shippingId}")
+    public ServerResponse<String> del(@PathVariable("shippingId") Integer shippingId,
+                                      @PathVariable("userId") Integer userId) {
         return shippingService.del(userId, shippingId);
     }
 
+    @ApiOperation("修改收货地址")
     @PutMapping("{userId}")
-    public ServerResponse update(ShippingVO shipping, @PathVariable("userId") Integer userId) {
-        return shippingService.update(userId, BaseVOUtil.parse(shipping,Shipping.class));
+    public ServerResponse<String> update(@RequestBody ShippingVO shipping,
+                                         @PathVariable("userId") Integer userId) {
+        return shippingService.update(userId, BaseVOUtil.parse(shipping, Shipping.class));
     }
 
 
+    @ApiOperation("获取指定收货地址")
     @GetMapping("{userId}/{shippingId}")
     public ServerResponse<ShippingVO> select(@PathVariable("shippingId") Integer shippingId,
-                                           @PathVariable("userId") Integer userId) {
+                                             @PathVariable("userId") Integer userId) {
         ServerResponse response = shippingService.select(userId, shippingId);
-        ShippingVO shippingVO = BaseVOUtil.parse(response.getData(),ShippingVO.class);
+        ShippingVO shippingVO = BaseVOUtil.parse(response.getData(), ShippingVO.class);
         return ServerResponse.createBySuccess(shippingVO);
     }
 
 
+    @ApiOperation("获取所有收货地址")
     @GetMapping("{userId}")
     public ServerResponse<PageInfo> list(@RequestParam(value = "pageNum", defaultValue = "1") int pageNum,
                                          @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,

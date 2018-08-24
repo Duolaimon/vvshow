@@ -14,6 +14,7 @@ import com.duol.cache.ValueCache;
 import com.duol.common.Const;
 import com.duol.common.ServerResponse;
 import com.duol.dao.*;
+import com.duol.dto.order.QRCode;
 import com.duol.pojo.*;
 import com.duol.service.OrderService;
 import com.duol.util.*;
@@ -22,8 +23,8 @@ import com.duol.vo.OrderProductVO;
 import com.duol.vo.OrderVO;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -86,7 +87,11 @@ public class OrderServiceImpl implements OrderService {
     public ServerResponse<OrderVO> createOrder(Integer userId, Integer shippingId) {
         //从购物车中获取数据
         List<Cart> cartList = cartMapper.selectCheckedCartByUserId(userId);
+        return doCreateOrder(userId, shippingId, cartList);
 
+    }
+
+    private ServerResponse<OrderVO> doCreateOrder(Integer userId, Integer shippingId, List<Cart> cartList) {
         //计算这个订单的总价
         ServerResponse<List<OrderItem>> serverResponse = this.getOrderItemByCart(userId, cartList);
         if (!serverResponse.isSuccess()) {
@@ -123,7 +128,56 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public ServerResponse pay(Long orderNo, Integer userId, String path) {
+    public ServerResponse<OrderVO> createOrder(Integer userId, Integer shippingId, String productIds) {
+        List<String> productList = Splitter.on(",").splitToList(productIds);
+        List<Cart> cartList = cartMapper.selectCartByUserIdAndProductIds(userId,productList);
+        return doCreateOrder(userId,shippingId,cartList);
+    }
+
+    /**
+     * 生成订单信息
+     *
+     * @param userId     用户
+     * @param shippingId 收货地址
+     * @param payment    总款
+     */
+    private Order assembleOrder(Integer userId, Integer shippingId, BigDecimal payment) {
+        Order order = new Order();
+        long currentTime = System.currentTimeMillis();
+        long orderNo = currentTime + new Random().nextInt(100);
+        order.setOrderNo(orderNo);
+        order.setStatus(Const.OrderStatusEnum.NO_PAY.getCode());
+        order.setPostage(0);
+        order.setPaymentType(Const.PaymentTypeEnum.ONLINE_PAY.getCode());
+        order.setPayment(payment);
+
+        order.setUserId(userId);
+        order.setShippingId(shippingId);
+        //发货时间等等
+        //付款时间等等
+        int rowCount = orderMapper.insert(order);
+        if (rowCount > 0) {
+            return order;
+        }
+        return null;
+    }
+
+    /**
+     * 计算订单商品列表总价格
+     *
+     * @param orderItemList 订单列表
+     * @return 总价格
+     */
+    private BigDecimal calculateTotalPrice(List<OrderItem> orderItemList) {
+        BigDecimal payment = new BigDecimal("0");
+        for (OrderItem orderItem : orderItemList) {
+            payment = BigDecimalUtil.add(payment.doubleValue(), orderItem.getTotalPrice().doubleValue());
+        }
+        return payment;
+    }
+
+    @Override
+    public ServerResponse<QRCode> pay(Long orderNo, Integer userId, String path) {
         Order order = orderMapper.selectByUserIdAndOrderNo(userId, orderNo);
         if (order == null) {
             return ServerResponse.createByErrorMessage("用户没有该订单");
@@ -135,12 +189,12 @@ public class OrderServiceImpl implements OrderService {
         switch (result.getTradeStatus()) {
             case SUCCESS:
                 logger.info("支付宝预下单成功: )");
-                Map<String, String> resultMap = Maps.newHashMap();
+                QRCode qrCode = new QRCode();
 
-                boolean isSuccess = successfulOrder(path, order, result, resultMap);
+                boolean isSuccess = successfulOrder(path, order, result, qrCode);
                 if (!isSuccess)
                     return ServerResponse.createByErrorMessage("二维码处理失败");
-                return ServerResponse.createBySuccess(resultMap);
+                return ServerResponse.createBySuccess(qrCode);
             case FAILED:
                 logger.error("支付宝预下单失败!!!");
                 return ServerResponse.createByErrorMessage("支付宝预下单失败!!!");
@@ -156,7 +210,7 @@ public class OrderServiceImpl implements OrderService {
 
     }
 
-    private boolean successfulOrder(String path, Order order, AlipayF2FPrecreateResult result, Map<String, String> resultMap) {
+    private boolean successfulOrder(String path, Order order, AlipayF2FPrecreateResult result, QRCode qrCode) {
         AlipayTradePrecreateResponse response = result.getResponse();
         dumpResponse(response);
 
@@ -180,8 +234,8 @@ public class OrderServiceImpl implements OrderService {
         }
         logger.info("qrPath:" + qrPath);
         String qrUrl = PropertiesUtil.getProperty("ftp.server.http.prefix") + targetFile.getName();
-        resultMap.put("orderNo", String.valueOf(order.getOrderNo()));
-        resultMap.put("qrUrl", qrUrl);
+        qrCode.setQrUrl(qrUrl);
+        qrCode.setOrderNo(String.valueOf(order.getOrderNo()));
         return isSuccess;
     }
 
@@ -326,14 +380,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public ServerResponse getOrderCartProduct(Integer userId) {
+    public ServerResponse<OrderProductVO> getOrderCartProduct(Integer userId) {
         OrderProductVO orderProductVo = new OrderProductVO();
         //从购物车中获取数据
 
         List<Cart> cartList = cartMapper.selectCheckedCartByUserId(userId);
         ServerResponse<List<OrderItem>> serverResponse = this.getOrderItemByCart(userId, cartList);
         if (!serverResponse.isSuccess()) {
-            return serverResponse;
+            return ServerResponse.createByError(serverResponse);
         }
         List<OrderItem> orderItemList = serverResponse.getData();
 
@@ -349,6 +403,57 @@ public class OrderServiceImpl implements OrderService {
         orderProductVo.setImageHost(PropertiesUtil.getProperty("ftp.server.http.prefix"));
         return ServerResponse.createBySuccess(orderProductVo);
 
+    }
+
+    /**
+     * 创建订单条例
+     *
+     * @param userId   用户
+     * @param cartList 购物车信息
+     * @return 订单列表
+     */
+    private ServerResponse<List<OrderItem>> getOrderItemByCart(Integer userId, List<Cart> cartList) {
+        List<OrderItem> orderItemList = Lists.newArrayList();
+        if (CollectionUtils.isEmpty(cartList)) {
+            return ServerResponse.createByErrorMessage("购物车为空");
+        }
+
+        //根据购物车列表信息初始化产品映射
+        constructProductMap(cartList);
+
+        //校验购物车的数据,包括产品的状态和数量
+        for (Cart cartItem : cartList) {
+            OrderItem orderItem = new OrderItem();
+            Product product = productMap.get(cartItem.getProductId());
+            if (Const.ProductStatusEnum.ON_SALE.getCode() != product.getStatus()) {
+                return ServerResponse.createByErrorMessage("产品" + product.getName() + "不是在线售卖状态");
+            }
+
+            //校验库存
+            if (cartItem.getQuantity() > product.getStock()) {
+                return ServerResponse.createByErrorMessage("产品" + product.getName() + "库存不足");
+            }
+
+            orderItem.setUserId(userId);
+            orderItem.setProductId(product.getId());
+            orderItem.setProductName(product.getName());
+            orderItem.setProductImage(product.getMainImage());
+            orderItem.setCurrentUnitPrice(product.getPrice());
+            orderItem.setQuantity(cartItem.getQuantity());
+            orderItem.setTotalPrice(BigDecimalUtil.mul(product.getPrice().doubleValue(), cartItem.getQuantity()));
+            orderItemList.add(orderItem);
+        }
+        return ServerResponse.createBySuccess(orderItemList);
+    }
+
+    private void constructProductMap(List<Cart> cartList) {
+        productMap = new HashMap<>(cartList.size());
+        List<Integer> productIdList = cartList.stream().map(Cart::getId).collect(Collectors.toList());
+        List<Product> productList = productMapper.selectListByIds(productIdList);
+        for (Product item :
+                productList) {
+            productMap.put(item.getId(), item);
+        }
     }
 
     @Override
@@ -451,97 +556,5 @@ public class OrderServiceImpl implements OrderService {
         productMap = null;
     }
 
-    /**
-     * 生成订单信息
-     *
-     * @param userId     用户
-     * @param shippingId 收货地址
-     * @param payment    总款
-     */
-    private Order assembleOrder(Integer userId, Integer shippingId, BigDecimal payment) {
-        Order order = new Order();
-        long currentTime = System.currentTimeMillis();
-        long orderNo = currentTime + new Random().nextInt(100);
-        order.setOrderNo(orderNo);
-        order.setStatus(Const.OrderStatusEnum.NO_PAY.getCode());
-        order.setPostage(0);
-        order.setPaymentType(Const.PaymentTypeEnum.ONLINE_PAY.getCode());
-        order.setPayment(payment);
 
-        order.setUserId(userId);
-        order.setShippingId(shippingId);
-        //发货时间等等
-        //付款时间等等
-        int rowCount = orderMapper.insert(order);
-        if (rowCount > 0) {
-            return order;
-        }
-        return null;
-    }
-
-
-    /**
-     * 计算订单商品列表总价格
-     *
-     * @param orderItemList 订单列表
-     * @return 总价格
-     */
-    private BigDecimal calculateTotalPrice(List<OrderItem> orderItemList) {
-        BigDecimal payment = new BigDecimal("0");
-        for (OrderItem orderItem : orderItemList) {
-            payment = BigDecimalUtil.add(payment.doubleValue(), orderItem.getTotalPrice().doubleValue());
-        }
-        return payment;
-    }
-
-    /**
-     * 创建订单条例
-     *
-     * @param userId   用户
-     * @param cartList 购物车信息
-     * @return 订单列表
-     */
-    private ServerResponse<List<OrderItem>> getOrderItemByCart(Integer userId, List<Cart> cartList) {
-        List<OrderItem> orderItemList = Lists.newArrayList();
-        if (CollectionUtils.isEmpty(cartList)) {
-            return ServerResponse.createByErrorMessage("购物车为空");
-        }
-
-        //根据购物车列表信息初始化产品映射
-        constructProductMap(cartList);
-
-        //校验购物车的数据,包括产品的状态和数量
-        for (Cart cartItem : cartList) {
-            OrderItem orderItem = new OrderItem();
-            Product product = productMap.get(cartItem.getProductId());
-            if (Const.ProductStatusEnum.ON_SALE.getCode() != product.getStatus()) {
-                return ServerResponse.createByErrorMessage("产品" + product.getName() + "不是在线售卖状态");
-            }
-
-            //校验库存
-            if (cartItem.getQuantity() > product.getStock()) {
-                return ServerResponse.createByErrorMessage("产品" + product.getName() + "库存不足");
-            }
-
-            orderItem.setUserId(userId);
-            orderItem.setProductId(product.getId());
-            orderItem.setProductName(product.getName());
-            orderItem.setProductImage(product.getMainImage());
-            orderItem.setCurrentUnitPrice(product.getPrice());
-            orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setTotalPrice(BigDecimalUtil.mul(product.getPrice().doubleValue(), cartItem.getQuantity()));
-            orderItemList.add(orderItem);
-        }
-        return ServerResponse.createBySuccess(orderItemList);
-    }
-
-    private void constructProductMap(List<Cart> cartList) {
-        productMap = new HashMap<>(cartList.size());
-        List<Integer> productIdList = cartList.stream().map(Cart::getId).collect(Collectors.toList());
-        List<Product> productList = productMapper.selectListByIds(productIdList);
-        for (Product item :
-                productList) {
-            productMap.put(item.getId(), item);
-        }
-    }
 }

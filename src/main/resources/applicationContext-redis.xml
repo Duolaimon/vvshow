@@ -17,7 +17,7 @@
 
     <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
         <property name="connectionFactory" ref="jedisConnectionFactory"/>
-        <property name="defaultSerializer" ref="stringRedisSerializer"/>
+        <property name="keySerializer" ref="stringRedisSerializer"/>
         <property name="enableDefaultSerializer" value="true"/>
     </bean>
 
@@ -31,9 +31,9 @@
             <map>
                 <entry key-ref="redisMessageListener">
                     <list>
-                        <bean class="org.springframework.data.redis.listener.PatternTopic">
+                        <bean class="org.springframework.data.redis.listener.PatternTopic" >
                             <!--<constructor-arg value="__keyevent@0__:*"/>-->
-                            <constructor-arg value="__keyevent@0__:*"/>
+                            <constructor-arg value="__keyevent@0__:qr-code:*"/>
                         </bean>
                     </list>
                 </entry>

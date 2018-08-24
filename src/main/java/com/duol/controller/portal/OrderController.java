@@ -6,8 +6,11 @@ import com.alipay.demo.trade.config.Configs;
 import com.duol.common.Const;
 import com.duol.common.ServerResponse;
 import com.duol.service.OrderService;
+import com.duol.vo.OrderProductVO;
 import com.duol.vo.OrderVO;
 import com.google.common.collect.Maps;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,38 +37,55 @@ public class OrderController {
     }
 
 
+    /*@ApiOperation("创建订单")
     @PostMapping("/{shippingId}/{userId}")
     public ServerResponse<OrderVO> create(@PathVariable("shippingId") Integer shippingId,
                                           @PathVariable("userId") Integer userId) {
         return orderService.createOrder(userId, shippingId);
+    }*/
+
+    @ApiOperation("创建订单")
+    @PostMapping("/{shippingId}/{userId}")
+    @ApiImplicitParam(name = "productIds",value = "用逗号分割要生成订单的产品id",paramType = "query")
+    public ServerResponse<OrderVO> create(@PathVariable("shippingId") Integer shippingId,
+                                          @PathVariable("userId") Integer userId,
+                                          @RequestParam("productIds") String productIds) {
+        return orderService.createOrder(userId, shippingId, productIds);
     }
 
 
+    @ApiOperation("取消订单")
     @DeleteMapping("/{orderNo}/{userId}")
-    public ServerResponse cancel(@PathVariable("orderNo") Long orderNo,
+    public ServerResponse<String> cancel(@PathVariable("orderNo") Long orderNo,
                                  @PathVariable("userId") Integer userId) {
         return orderService.cancel(userId, orderNo);
     }
 
 
+    @ApiOperation("从购物车中获取数据")
     @GetMapping("/carts/{userId}")
-    public ServerResponse getOrderCartProduct(@PathVariable("userId") Integer userId) {
+    public ServerResponse<OrderProductVO> getOrderCartProduct(@PathVariable("userId") Integer userId) {
         return orderService.getOrderCartProduct(userId);
     }
 
 
+    @ApiOperation("查询订单信息")
     @GetMapping("/{orderNo}/{userId}")
     public ServerResponse detail(@PathVariable("orderNo") Long orderNo,
                                  @PathVariable("userId") Integer userId) {
         return orderService.getOrderDetail(userId, orderNo);
     }
 
+    @ApiOperation("查询所有订单")
     @GetMapping("/{userId}")
-    public ServerResponse list(@PathVariable("userId") Integer userId, @RequestParam(value = "pageNum", defaultValue = "1") int pageNum, @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
+    public ServerResponse list(@PathVariable("userId") Integer userId,
+                               @RequestParam(value = "pageNum", defaultValue = "1") int pageNum,
+                               @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
         return orderService.getOrderList(userId, pageNum, pageSize);
     }
 
 
+    @ApiOperation("支付")
     @PutMapping("/{orderNo}/{userId}")
     @ResponseBody
     public ServerResponse pay(@PathVariable("orderNo") Long orderNo, HttpServletRequest request, @PathVariable("userId") Integer userId) {
@@ -73,6 +93,7 @@ public class OrderController {
         return orderService.pay(orderNo, userId, path);
     }
 
+    @ApiOperation("回调")
     @GetMapping("/alipay_callback.do")
     @ResponseBody
     public Object alipayCallback(HttpServletRequest request) {
@@ -116,6 +137,7 @@ public class OrderController {
     }
 
 
+    @ApiOperation("查询支付状态")
     @GetMapping("query_order_pay_status.do")
     @ResponseBody
     public ServerResponse<Boolean> queryOrderPayStatus(Long orderNo, @RequestParam("userId") Integer userId) {

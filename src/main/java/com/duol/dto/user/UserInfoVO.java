@@ -1,20 +1,14 @@
 package com.duol.dto.user;
 
-import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 /**
  * @author Duolaimon
- * 18-8-1 下午7:54
+ * 18-8-18 下午2:08
  */
-@ApiModel
-public class UserInfoVo {
-
+public class UserInfoVO {
     @ApiModelProperty(required = true,position = 1)
     private String username;
-
-    @ApiModelProperty(required = true,position = 2)
-    private String password;
 
     @ApiModelProperty(required = true,position = 3)
     private String email;
@@ -25,24 +19,12 @@ public class UserInfoVo {
     @ApiModelProperty(position = 6)
     private String question;
 
-    @ApiModelProperty(position = 7)
-    private String answer;
-
-
     public String getUsername() {
         return username;
     }
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getEmail() {
@@ -67,13 +49,5 @@ public class UserInfoVo {
 
     public void setQuestion(String question) {
         this.question = question;
-    }
-
-    public String getAnswer() {
-        return answer;
-    }
-
-    public void setAnswer(String answer) {
-        this.answer = answer;
     }
 }

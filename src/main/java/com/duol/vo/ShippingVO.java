@@ -1,10 +1,15 @@
 package com.duol.vo;
 
+import io.swagger.annotations.ApiModelProperty;
+
 /**
  * @author Duolaimon
  * 18-7-16 下午3:47
  */
 public class ShippingVO {
+    @ApiModelProperty(position = 1)
+    private Integer id;
+
     private String receiverName;
 
     private String receiverPhone;
@@ -21,6 +26,13 @@ public class ShippingVO {
 
     private String receiverZip;
 
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
     public String getReceiverName() {
         return receiverName;

@@ -22,7 +22,7 @@ public class ValueCache {
 
     public static boolean verifySessionID(String userId, @NotNull String sessionID) {
         String value = operations.get(USER_SESSION_PREFIX + userId);
-        return value.equals(sessionID);
+        return sessionID.equals(value);
     }
 
     public static boolean verifyManageSessionId(String userId, @NotNull String sessionID) {
@@ -39,6 +39,13 @@ public class ValueCache {
         return UUID;
     }
 
+    /**
+     * 延长sessionId时长
+     */
+    public static void expireSessionId(String userId) {
+        expire(USER_SESSION_PREFIX + userId, 12, TimeUnit.HOURS);
+    }
+
     public static void removeSessionID(String userId) {
         delete(USER_SESSION_PREFIX + userId);
     }
@@ -46,7 +53,11 @@ public class ValueCache {
 
     public static void cache(String key, String uuid) {
 //        operations.set(key, uuid, 30, TimeUnit.MINUTES);
-        operations.set(key, uuid, 30, TimeUnit.SECONDS);
+        operations.set(key, uuid, 30, TimeUnit.MINUTES);
+    }
+
+    public static void expire(String key, long timeout, TimeUnit unit) {
+        operations.getOperations().expire(key, timeout, unit);
     }
 
     public static String get(String key) {

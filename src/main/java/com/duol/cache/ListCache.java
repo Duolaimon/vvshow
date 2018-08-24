@@ -19,7 +19,6 @@ public class ListCache<V> {
 
     @Autowired
     public ListCache(RedisConnection<V> redisCache) {
-        redisCache.initListTemplate();
         operations = redisCache.listOperations();
     }
 

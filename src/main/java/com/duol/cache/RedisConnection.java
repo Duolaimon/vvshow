@@ -33,7 +33,7 @@ public class RedisConnection<V> {
     /**
      *  创建缓存对象列表的 <Code> RedisTemplate </Code>
      */
-    void initListTemplate() {
+    private void initListTemplate() {
         redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         redisTemplate.setKeySerializer(new StringRedisSerializer());
@@ -51,6 +51,7 @@ public class RedisConnection<V> {
     }
 
     ListOperations<String, V> listOperations(){
+        this.initListTemplate();
         return redisTemplate.opsForList();
     }
 

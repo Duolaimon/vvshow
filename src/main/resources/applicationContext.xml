@@ -14,8 +14,6 @@
     </context:component-scan>
 
     <!--<context:annotation-config/>-->
-    <aop:aspectj-autoproxy/>
-
 
     <import resource="applicationContext-datasource.xml"/>
 

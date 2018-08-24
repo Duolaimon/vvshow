@@ -132,9 +132,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ServerResponse<PageInfo> getProductByKeywordCategory(String keyword, Integer categoryId, int pageNum, int pageSize, String orderBy) {
-        if (StringUtils.isBlank(keyword) && categoryId == null) {
-            return ServerResponse.createByErrorCodeMessage(ResponseCode.ILLEGAL_ARGUMENT.getCode(), ResponseCode.ILLEGAL_ARGUMENT.getDesc());
-        }
+//        if (StringUtils.isBlank(keyword) && categoryId == null) {
+//            return ServerResponse.createByErrorCodeMessage(ResponseCode.ILLEGAL_ARGUMENT.getCode(), ResponseCode.ILLEGAL_ARGUMENT.getDesc());
+//        }
         List<Integer> categoryIdList = Lists.newArrayList();
 
         if (categoryId != null) {
@@ -152,7 +152,8 @@ public class ProductServiceImpl implements ProductService {
 
         PageHelper.startPage(pageNum, pageSize);
         //排序处理
-        orderBy(orderBy);
+        if (StringUtils.isNotBlank(orderBy))
+            orderBy(orderBy);
         List<Product> productList = productMapper.selectByNameAndCategoryIds(keyword, categoryIdList.size() == 0 ? null : categoryIdList);
 
         return getPageInfoServerResponse(productList);

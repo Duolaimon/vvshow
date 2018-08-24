@@ -1,5 +1,6 @@
 package com.duol.interceptor;
 
+import com.duol.cache.ObjectCache;
 import com.duol.cache.ValueCache;
 import com.duol.common.ResponseCode;
 import com.duol.common.ServerResponse;
@@ -12,11 +13,13 @@ import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 验证登录状态,避免重复登录
@@ -32,14 +35,13 @@ public class SessionInterceptor extends HandlerInterceptorAdapter {
         HttpSession session = request.getSession();
         Map pathVariables = (Map) request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
         String userId = (String) pathVariables.get("userId");
-        logger.info("userId={}",userId);
         String[] info = SessionUtil.verifyUserLogin(session);
         ServerResponse serverResponse;
         if (Objects.nonNull(info) && ValueCache.verifySessionID(info[0], info[1])) {
             if (StringUtils.isNotBlank(userId)) {      //uri中用userId变量
-                if ( StringUtils.equals(info[0], userId)) {
+                if (StringUtils.equals(info[0], userId)) {
                     return true;
-                }else {
+                } else {
                     logger.error("无操作权限");
                     serverResponse = ServerResponse.createByErrorMessage("该用户无操作权限");
                 }
@@ -48,7 +50,7 @@ public class SessionInterceptor extends HandlerInterceptorAdapter {
             }
         } else {
             logger.error("用户未登录");
-            serverResponse = ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(),ResponseCode.NEED_LOGIN.getDesc());
+            serverResponse = ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), ResponseCode.NEED_LOGIN.getDesc());
         }
         response.setContentType("application/json; charset=utf-8");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -59,9 +61,22 @@ public class SessionInterceptor extends HandlerInterceptorAdapter {
         return false;
     }
 
+    /**
+     * 在三十分钟内有操作,延时session
+     */
     @Override
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
-
+        Map pathVariables = (Map) request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+        String userId = (String) pathVariables.get("userId");
+        ValueCache.expireSessionId(userId);
+        ValueCache.expire(ObjectCache.REDIS_OBJECT_PREFIX + userId, 12, TimeUnit.HOURS);
+        Cookie[] cookies = request.getCookies();
+        for (Cookie cookie :
+                cookies) {
+            if ("userId".equals(cookie.getName())) {
+                cookie.setMaxAge(30 * 60 * 24);
+            }
+        }
     }
 
     @Override

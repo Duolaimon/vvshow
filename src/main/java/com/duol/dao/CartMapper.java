@@ -32,5 +32,7 @@ public interface CartMapper {
 
     List<Cart> selectCheckedCartByUserId(Integer userId);
 
-    int deleteCartsByPrimaryKey(List<Cart> carts);
+    int deleteCartsByPrimaryKey(@Param("cartList") List<Cart> cartList);
+
+    List<Cart> selectCartByUserIdAndProductIds(@Param("userId") Integer userId, @Param("productIds") List<String> productIds);
 }
