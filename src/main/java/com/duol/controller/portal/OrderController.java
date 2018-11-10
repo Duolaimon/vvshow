@@ -37,12 +37,6 @@ public class OrderController {
     }
 
 
-    /*@ApiOperation("创建订单")
-    @PostMapping("/{shippingId}/{userId}")
-    public ServerResponse<OrderVO> create(@PathVariable("shippingId") Integer shippingId,
-                                          @PathVariable("userId") Integer userId) {
-        return orderService.createOrder(userId, shippingId);
-    }*/
 
     @ApiOperation("创建订单")
     @PostMapping("/{shippingId}/{userId}")

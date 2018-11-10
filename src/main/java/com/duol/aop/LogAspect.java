@@ -2,14 +2,15 @@ package com.duol.aop;
 
 import io.swagger.annotations.ApiOperation;
 import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -28,17 +29,18 @@ public class LogAspect {
     }
 
 
-    @After("controllerPoint()")
+    @Before("controllerPoint()")
     public void doAfter(JoinPoint joinPoint) {
         executorService.submit(() -> {
-            String value = getControllerMethodValue(joinPoint);
-            logger.info("调用'{}'方法", value);
+            StringBuilder parameters = new StringBuilder();
+            String value = getControllerMethodValue(joinPoint,parameters);
+            logger.info("调用'{}'方法,{}", value, parameters);
         });
     }
 
 
     // 通过反射获取参入的参数
-    private String getControllerMethodValue(JoinPoint joinPoint) {
+    private String getControllerMethodValue(JoinPoint joinPoint, StringBuilder parameterString) {
         String targetName = joinPoint.getTarget().getClass().getName();
         String methodName = joinPoint.getSignature().getName();
         Object[] arguments = joinPoint.getArgs();
@@ -54,9 +56,18 @@ public class LogAspect {
         Method[] methods = targetClass.getMethods();
         for (Method method : methods) {
             if (method.getName().equals(methodName)) {
-                Class[] clazzs = method.getParameterTypes();
+                Parameter[] parameters = method.getParameters();
+                if (parameters.length == arguments.length) {
+                    for (int i = 0; i < arguments.length; i++) {
+                        if (arguments[i].toString().contains("org.apache.catalina"))
+                            continue;
+                        parameterString
+                                .append(parameters[i].getName())
+                                .append("=")
+                                .append(arguments[i].toString())
+                                .append(",");
+                    }
 
-                if (clazzs.length == arguments.length) {
                     value = method.getAnnotation(ApiOperation.class).value();
                     break;
                 }

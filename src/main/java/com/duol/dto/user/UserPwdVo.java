@@ -12,6 +12,14 @@ public class UserPwdVo {
     @ApiModelProperty(value = "密码",position = 2)
     private String password;
 
+    @Override
+    public String toString() {
+        return "UserPwdVo{" +
+                "username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                '}';
+    }
+
     public String getUsername() {
         return username;
     }

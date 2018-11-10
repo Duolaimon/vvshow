@@ -9,6 +9,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
  * 统一异常处理
@@ -22,8 +23,8 @@ public class WebExceptionHandle {
 
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ServerResponse handleHttpMessageNotReadableException(HttpMessageNotReadableException e){
+    @ExceptionHandler({HttpMessageNotReadableException.class,MethodArgumentTypeMismatchException.class})
+    public ServerResponse handleHttpMessageNotReadableException(Exception e){
         logger.error("参数解析失败", e);
         return ServerResponse.createByErrorMessage("could_not_read_json");
     }
@@ -34,6 +35,7 @@ public class WebExceptionHandle {
         logger.error("不支持当前请求方法", e);
         return ServerResponse.createByErrorMessage("request_method_not_supported");
     }
+
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(Exception.class)

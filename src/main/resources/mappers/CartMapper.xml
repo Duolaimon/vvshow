@@ -156,7 +156,7 @@
         delete from tb_cart
         where id in
         <foreach collection="cartList" index="index" item="item" separator="," open="(" close=")">
-            #{item.getId}
+            #{item.id}
         </foreach>
     </delete>
 
@@ -190,7 +190,8 @@
         select
         <include refid="Base_Column_List"/>
         from tb_cart
-        where product_id in
+        where user_id = #{userId} and
+        product_id in
         <foreach collection="productIds" open="(" separator="," close=")" item="productId">
             #{productId}
         </foreach>

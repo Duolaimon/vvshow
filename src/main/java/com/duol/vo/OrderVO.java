@@ -6,7 +6,6 @@ import com.duol.pojo.Order;
 import com.duol.pojo.OrderItem;
 import com.duol.pojo.Shipping;
 import com.duol.util.BaseVOUtil;
-import com.duol.util.DateTimeUtil;
 import com.duol.util.PropertiesUtil;
 import com.google.common.collect.Lists;
 
@@ -35,15 +34,15 @@ public class OrderVO {
 
     private String statusDesc;
 
-    private String paymentTime;
+    private Date paymentTime;
 
-    private String sendTime;
+    private Date sendTime;
 
-    private String endTime;
+    private Date endTime;
 
-    private String closeTime;
+    private Date closeTime;
 
-    private String createTime;
+    private Date createTime;
 
     //订单的明细
     private List<OrderItemVO> orderItemVOList;
@@ -75,6 +74,7 @@ public class OrderVO {
 
         for (OrderItem orderItem : orderItemList) {
             OrderItemVO orderItemVo = BaseVOUtil.parse(orderItem, OrderItemVO.class);
+            orderItemVo.setCreateTime(orderItem.getCreateTime());
             orderItemVOList.add(orderItemVo);
         }
         orderVo.setOrderItemVOList(orderItemVOList);
@@ -138,44 +138,44 @@ public class OrderVO {
         this.statusDesc = statusDesc;
     }
 
-    public String getPaymentTime() {
+    public Date getPaymentTime() {
         return paymentTime;
     }
 
     public void setPaymentTime(Date paymentTime) {
-        this.paymentTime = DateTimeUtil.dateToStr(paymentTime);
+        this.paymentTime = paymentTime;
     }
 
-    public String getSendTime() {
+    public Date getSendTime() {
         return sendTime;
     }
 
     public void setSendTime(Date sendTime) {
-        this.sendTime = DateTimeUtil.dateToStr(sendTime);
+        this.sendTime = sendTime;
     }
 
-    public String getEndTime() {
+    public Date getEndTime() {
         return endTime;
     }
 
     public void setEndTime(Date endTime) {
-        this.endTime = DateTimeUtil.dateToStr(endTime);
+        this.endTime = endTime;
     }
 
-    public String getCloseTime() {
+    public Date getCloseTime() {
         return closeTime;
     }
 
     public void setCloseTime(Date closeTime) {
-        this.closeTime = DateTimeUtil.dateToStr(closeTime);
+        this.closeTime = closeTime;
     }
 
-    public String getCreateTime() {
+    public Date getCreateTime() {
         return createTime;
     }
 
     public void setCreateTime(Date createTime) {
-        this.createTime = DateTimeUtil.dateToStr(createTime);
+        this.createTime = createTime;
     }
 
     public List<OrderItemVO> getOrderItemVOList() {

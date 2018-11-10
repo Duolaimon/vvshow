@@ -1,7 +1,5 @@
 package com.duol.vo;
 
-import com.duol.util.DateTimeUtil;
-
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -24,7 +22,7 @@ public class OrderItemVO {
 
     private BigDecimal totalPrice;
 
-    private String createTime;
+    private Date createTime;
 
     public Long getOrderNo() {
         return orderNo;
@@ -82,12 +80,11 @@ public class OrderItemVO {
         this.totalPrice = totalPrice;
     }
 
-    public String getCreateTime() {
+    public Date getCreateTime() {
         return createTime;
     }
 
     public void setCreateTime(Date createTime) {
-        this.createTime = DateTimeUtil.dateToStr(createTime);
+        this.createTime = createTime;
     }
-
 }

@@ -36,7 +36,6 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Duolaimon
@@ -83,13 +82,6 @@ public class OrderServiceImpl implements OrderService {
         this.shippingMapper = shippingMapper;
     }
 
-    @Override
-    public ServerResponse<OrderVO> createOrder(Integer userId, Integer shippingId) {
-        //从购物车中获取数据
-        List<Cart> cartList = cartMapper.selectCheckedCartByUserId(userId);
-        return doCreateOrder(userId, shippingId, cartList);
-
-    }
 
     private ServerResponse<OrderVO> doCreateOrder(Integer userId, Integer shippingId, List<Cart> cartList) {
         //计算这个订单的总价
@@ -129,8 +121,10 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public ServerResponse<OrderVO> createOrder(Integer userId, Integer shippingId, String productIds) {
-        List<String> productList = Splitter.on(",").splitToList(productIds);
-        List<Cart> cartList = cartMapper.selectCartByUserIdAndProductIds(userId,productList);
+        List<String> productIdList = Splitter.on(",").splitToList(productIds);
+        //根据购物车列表信息初始化产品映射
+        constructProductMap(productIdList);
+        List<Cart> cartList = cartMapper.selectCartByUserIdAndProductIds(userId,productIdList);
         return doCreateOrder(userId,shippingId,cartList);
     }
 
@@ -155,11 +149,7 @@ public class OrderServiceImpl implements OrderService {
         order.setShippingId(shippingId);
         //发货时间等等
         //付款时间等等
-        int rowCount = orderMapper.insert(order);
-        if (rowCount > 0) {
-            return order;
-        }
-        return null;
+        return order;
     }
 
     /**
@@ -418,13 +408,13 @@ public class OrderServiceImpl implements OrderService {
             return ServerResponse.createByErrorMessage("购物车为空");
         }
 
-        //根据购物车列表信息初始化产品映射
-        constructProductMap(cartList);
+
 
         //校验购物车的数据,包括产品的状态和数量
         for (Cart cartItem : cartList) {
             OrderItem orderItem = new OrderItem();
             Product product = productMap.get(cartItem.getProductId());
+            if (product == null) continue;
             if (Const.ProductStatusEnum.ON_SALE.getCode() != product.getStatus()) {
                 return ServerResponse.createByErrorMessage("产品" + product.getName() + "不是在线售卖状态");
             }
@@ -446,9 +436,8 @@ public class OrderServiceImpl implements OrderService {
         return ServerResponse.createBySuccess(orderItemList);
     }
 
-    private void constructProductMap(List<Cart> cartList) {
-        productMap = new HashMap<>(cartList.size());
-        List<Integer> productIdList = cartList.stream().map(Cart::getId).collect(Collectors.toList());
+    private void constructProductMap(List<String> productIdList) {
+        productMap = new HashMap<>(productIdList.size());
         List<Product> productList = productMapper.selectListByIds(productIdList);
         for (Product item :
                 productList) {

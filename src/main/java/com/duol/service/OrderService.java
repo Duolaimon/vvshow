@@ -16,7 +16,6 @@ public interface OrderService {
     ServerResponse<QRCode> pay(Long orderNo, Integer userId, String path);
     ServerResponse aliCallback(Map<String,String> params);
     ServerResponse queryOrderPayStatus(Integer userId,Long orderNo);
-    ServerResponse<OrderVO> createOrder(Integer userId,Integer shippingId);
     ServerResponse<String> cancel(Integer userId,Long orderNo);
     ServerResponse<OrderProductVO> getOrderCartProduct(Integer userId);
     ServerResponse<OrderVO> getOrderDetail(Integer userId, Long orderNo);

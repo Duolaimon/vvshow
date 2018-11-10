@@ -46,17 +46,16 @@ public class UserController {
                                         HttpSession session, HttpServletResponse servletResponse, HttpServletRequest servletRequest) {
         String username = user.getUsername();
         String password = user.getPassword();
-        logger.info("login: username:{},password:{}", username, password);
         Cookie[] cookies = servletRequest.getCookies();
-        for (Cookie cookie :
-                cookies) {
-            if ("userId".equals(cookie.getName())) {
-                return ServerResponse.createBySuccessMessage("用户已登录,不要重复登录");
+        if (cookies != null)
+            for (Cookie cookie :
+                    cookies) {
+                if ("userId".equals(cookie.getName()) && Objects.nonNull(session.getAttribute(Const.CURRENT_USER))) {
+                    return ServerResponse.createBySuccessMessage("用户已登录,不要重复登录");
+                }
             }
-        }
         ServerResponse<String> response = userService.login(username, password);
-        doLogin(session, servletResponse, response);
-        return response;
+        return doLogin(session, servletResponse, response);
     }
 
     @ApiOperation("用户注册")
@@ -66,23 +65,21 @@ public class UserController {
     public ServerResponse<String> register(@RequestBody LoginVO loginVO, HttpSession session, HttpServletResponse servletResponse) {
         logger.info("register: username:{}", loginVO.getUsername());
         ServerResponse<String> response = userService.register(BaseVOUtil.parse(loginVO, User.class));
-        doLogin(session, servletResponse, response);
-        return response;
+        return doLogin(session, servletResponse, response);
     }
 
-    private void doLogin(HttpSession session, HttpServletResponse servletResponse, ServerResponse<String> response) {
+    private ServerResponse<String> doLogin(HttpSession session, HttpServletResponse servletResponse, ServerResponse<String> response) {
         if (response.isSuccess()) {
             String[] info = response.getData().split("-");
             Cookie cookie = new Cookie("userId", info[0]);
             cookie.setHttpOnly(false);
-            cookie.setMaxAge(30 * 60);
+            cookie.setMaxAge(30 * 60 * 10);
             cookie.setPath("/");
             servletResponse.addCookie(cookie);
             session.setAttribute(Const.CURRENT_USER, response.getData());
-
-
             servletResponse.setStatus(HttpServletResponse.SC_CREATED);
         }
+        return ServerResponse.createBySuccess(response, response.getData().split("-")[0]);
     }
 
 
